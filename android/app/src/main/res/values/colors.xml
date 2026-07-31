@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Koshti brand palette (matches the web UI tokens). -->
+    <color name="colorPrimary">#FF5D2E</color>
+    <color name="colorPrimaryDark">#06080D</color>
+    <color name="colorAccent">#FFA62E</color>
+    <color name="splashBackground">#06080D</color>
+    <color name="iconBackground">#0B0E15</color>
+</resources>
