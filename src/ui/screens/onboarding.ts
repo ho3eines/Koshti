@@ -1,5 +1,5 @@
 import { audio } from '../../engine/audio';
-import { t } from '../../core/i18n';
+import { t, faNum } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { STYLE_LIST, type FightingStyle } from '../../game/data/styles';
 import { CLUBS } from '../../game/data/leagues';
@@ -43,7 +43,7 @@ export const renderOnboarding = (app: App): void => {
 
   // ------------------------------------------------------------------ gate
   const drawGate = (): void => {
-    void app.saves.peek().then((meta) => {
+    const renderGateUI = (meta: { exists: boolean; name?: string; level?: number; division?: string; savedAt?: number; label?: string }): void => {
       clear(body);
       const wrap = el('div', { class: 'onboard' });
 
@@ -59,7 +59,7 @@ export const renderOnboarding = (app: App): void => {
                 el('div', { class: 'card-title', text: meta.name ?? t('onboard.begin') }),
                 el('p', {
                   class: 'card-sub',
-                  text: `${t(`div.${meta.division ?? 'amateur'}`)} · سطح ${meta.level ?? 1} · ${formatRelative(meta.savedAt ?? Date.now())}`,
+                  text: `${t(`div.${meta.division ?? 'amateur'}`)} · ${t('profile.level', { lvl: faNum(meta.level ?? 1) })} · ${formatRelative(meta.savedAt ?? Date.now())}`,
                 }),
               ]),
             ]),
@@ -146,7 +146,25 @@ export const renderOnboarding = (app: App): void => {
       );
 
       body.appendChild(wrap);
-    });
+    };
+
+    if (app.save) {
+      renderGateUI({
+        exists: true,
+        name: app.save.profile.name,
+        level: app.save.profile.level,
+        division: app.save.league.division,
+        savedAt: app.save.checkpoint.savedAt,
+        label: app.save.checkpoint.label,
+      });
+    } else {
+      renderGateUI({ exists: false });
+      void app.saves.peek().then((meta) => {
+        if (meta.exists && step === 'gate') {
+          renderGateUI(meta);
+        }
+      }).catch(() => {});
+    }
   };
 
   const confirmNewCareer = (): void => {

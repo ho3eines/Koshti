@@ -85,11 +85,11 @@ export class InputManager {
     this.el.addEventListener('pointerup', this.onUp, { passive: false });
     this.el.addEventListener('pointercancel', this.onUp, { passive: false });
     // Support keyboard for desktop testing (WASD / arrows + JKLU space).
-    this.el.setAttribute('tabindex', '0');
+    this.el.setAttribute?.('tabindex', '0');
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
-    globalThis.addEventListener('keydown', this.onKeyDown);
-    globalThis.addEventListener('keyup', this.onKeyUp);
+    globalThis.addEventListener?.('keydown', this.onKeyDown);
+    globalThis.addEventListener?.('keyup', this.onKeyUp);
   }
 
   disable(): void {
@@ -99,8 +99,8 @@ export class InputManager {
     this.el.removeEventListener('pointermove', this.onMove);
     this.el.removeEventListener('pointerup', this.onUp);
     this.el.removeEventListener('pointercancel', this.onUp);
-    globalThis.removeEventListener('keydown', this.onKeyDown);
-    globalThis.removeEventListener('keyup', this.onKeyUp);
+    globalThis.removeEventListener?.('keydown', this.onKeyDown);
+    globalThis.removeEventListener?.('keyup', this.onKeyUp);
     this.reset();
   }
 

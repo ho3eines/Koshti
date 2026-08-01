@@ -68,14 +68,26 @@ export class App {
     }
 
     onProgress(0.55, 'Compiling shaders…');
-    this.renderer = new GameRenderer({
-      canvas: this.canvas,
-      preset,
-      targetFps: this.save?.settings.targetFps ?? 60,
-      dynamicResolution: this.save?.settings.dynamicResolution ?? true,
-      showDamageNumbers: this.save?.settings.showDamageNumbers ?? true,
-      cameraShake: this.save?.settings.cameraShake ?? 1,
-    });
+    try {
+      this.renderer = new GameRenderer({
+        canvas: this.canvas,
+        preset,
+        targetFps: this.save?.settings.targetFps ?? 60,
+        dynamicResolution: this.save?.settings.dynamicResolution ?? true,
+        showDamageNumbers: this.save?.settings.showDamageNumbers ?? true,
+        cameraShake: this.save?.settings.cameraShake ?? 1,
+      });
+    } catch (e) {
+      console.warn('GameRenderer failed with preset', preset, 'retrying with low quality', e);
+      this.renderer = new GameRenderer({
+        canvas: this.canvas,
+        preset: 'low',
+        targetFps: 30,
+        dynamicResolution: true,
+        showDamageNumbers: true,
+        cameraShake: 1,
+      });
+    }
 
     onProgress(0.78, 'Building arena…');
     this.renderer.loadArena('training_hall');

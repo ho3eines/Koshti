@@ -427,14 +427,29 @@ const bindHold = (node: HTMLElement, down: () => void, up: () => void): void => 
   node.addEventListener('pointerleave', release);
 };
 
-/** Broadcast-style intro: black bars, fighter cards, arena name. */
+/** Broadcast-style intro: black bars, fighter cards, arena name. Tap to skip. */
 export const showIntroCinematic = (
   app: App,
   cfg: MatchConfig,
   arenaName: string,
   onDone: () => void,
 ): void => {
-  const layer = el('div', { class: 'cinematic cine-bars' }, [
+  let dismissed = false;
+  let timer2: ReturnType<typeof setTimeout> | null = null;
+  const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
+    clearTimeout(timer1);
+    if (timer2) clearTimeout(timer2);
+    layer.style.transition = 'opacity .25s ease';
+    layer.style.opacity = '0';
+    globalThis.setTimeout(() => {
+      layer.remove();
+      onDone();
+    }, 260);
+  };
+
+  const layer = el('div', { class: 'cinematic cine-bars', style: 'pointer-events:auto;cursor:pointer' }, [
     el('div', { class: 'cine-text' }, [
       el('div', { class: 'cine-sub', text: arenaName }),
       el('div', { class: 'cine-title', text: cfg.title ?? t('match.main_event') }),
@@ -452,11 +467,17 @@ export const showIntroCinematic = (
       cfg.subtitle ? el('div', { class: 'cine-sub', style: 'margin-top:14px', text: cfg.subtitle }) : null,
     ]),
   ]);
+
+  layer.addEventListener('pointerdown', () => {
+    (app.activeMatch as { startIntro?: (s: number) => void } | null)?.startIntro?.(0);
+    dismiss();
+  });
+
   app.mount(layer);
-  globalThis.setTimeout(() => {
+  const timer1 = globalThis.setTimeout(() => {
     layer.style.transition = 'opacity .5s ease';
     layer.style.opacity = '0';
-    globalThis.setTimeout(() => {
+    timer2 = globalThis.setTimeout(() => {
       layer.remove();
       onDone();
     }, 520);

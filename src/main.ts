@@ -65,9 +65,13 @@ const main = async (): Promise<void> => {
       }
     });
     document.removeEventListener('pointerdown', unlock);
+    document.removeEventListener('touchstart', unlock);
+    document.removeEventListener('click', unlock);
     document.removeEventListener('keydown', unlock);
   };
   document.addEventListener('pointerdown', unlock, { once: false });
+  document.addEventListener('touchstart', unlock, { once: false });
+  document.addEventListener('click', unlock, { once: false });
   document.addEventListener('keydown', unlock, { once: false });
 
   bootScreen?.classList.add('hidden');

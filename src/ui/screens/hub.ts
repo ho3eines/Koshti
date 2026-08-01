@@ -60,7 +60,7 @@ export const renderHub = (app: App): void => {
         el('div', { class: 'grow' }, [
           el('div', {
             style: 'font-size:11px;letter-spacing:1.6px;color:var(--text-faint);font-weight:800',
-            text: `سطح ${faNum(p.level)}`,
+            text: t('profile.level', { lvl: faNum(p.level) }),
           }),
           el('div', { style: 'font-family:var(--font-display);font-size:19px;letter-spacing:.5px', text: t(`div.${save.league.division}`) }),
         ]),

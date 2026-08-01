@@ -707,8 +707,9 @@ const FA_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 export const toPersianDigits = (s: string): string =>
   s.replace(/\d/g, (d) => FA_DIGITS[Number(d)] ?? d);
 
-/** Convert an ASCII numeral to Persian digits for display. */
-export const faNum = (n: number | string): string => toPersianDigits(String(n));
+/** Convert an ASCII numeral to Persian digits for display if current lang is Persian. */
+export const faNum = (n: number | string): string =>
+  current === 'fa' ? toPersianDigits(String(n)) : String(n);
 
 // Apply defaults on load.
 setLang('fa');
