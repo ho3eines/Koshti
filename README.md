@@ -22,18 +22,47 @@ npm test               # 217 tests
 npm run build          # production bundle
 ```
 
-### Android
+### The `public/` build
 
 ```bash
-npm run android:sync   # build web assets + sync into the native project
-npm run android:open   # open in Android Studio
-npm run android:run    # build, install and launch on a connected device
-npm run android:apk    # assemble a release APK
+npm run build:public   # assembles public/
+npm run serve:public   # serve it at localhost:8080
 ```
 
-Requires JDK 21 and the Android SDK (API 36). The native project already lives
-in `android/` — icons, splash screens, manifest and ProGuard rules are all
-configured.
+This produces:
+
+```
+public/
+├── index.html      landing page with play + APK download links
+└── app/            the playable game, as an installable PWA
+```
+
+`public/app` is a full **Progressive Web App**: open it on an Android phone,
+tap *Add to Home screen*, and it installs with its own launcher icon, runs
+fullscreen, and works offline via a service worker. In practice that's the
+fastest way to get the game onto a device.
+
+### Getting the APK
+
+The APK is **built by CI, not committed to the repo** — binaries don't belong
+in Git, and the build needs the Android SDK.
+
+1. **Download it:** GitHub → **Actions** → *Build Android APK* → newest green
+   run → **Artifacts** → `koshti-apk`.
+2. **Or build it locally:**
+
+```bash
+npm run android:apk
+# → android/app/build/outputs/apk/release/
+```
+
+Requires JDK 21 and Android SDK 36. The native project in `android/` is fully
+configured: icons, splash screens for every density, immersive-fullscreen
+activity, GL ES 3.0 requirement, cloud-backup rules and ProGuard rules.
+
+Tagging a release (`git tag v1.0.0 && git push --tags`) attaches the APKs to a
+GitHub Release. On `main`, CI also copies them into `public/apk/` and can
+deploy the whole `public/` folder to GitHub Pages.
 
 ---
 
@@ -197,8 +226,9 @@ tests/career.test.ts     63   saves, migration, progression, league, brackets
 tests/engine.test.ts     50   rig, animation, camera, quality, particles, input
 tests/ui.test.ts         50   every screen, full onboarding, navigation, persistence
 tests/gameplay.test.ts   23   full match loops, frame-rate independence, balance
+tests/bundle.test.ts      4   boots the shipped bundle, PWA manifest, chunks
                         ───
-                        217
+                        221
 ```
 
 Run with `npm test`.
@@ -228,10 +258,15 @@ Worth recording, because they were all real:
 
 ## Known limitations
 
-- **No WebGL in CI.** Browser binaries couldn't be downloaded in the build
-  sandbox, so the rendered output has not been visually verified on a device.
-  Everything CPU-side (scene graph, rig, animation, camera, quality logic) is
-  tested for real; the actual pixels are not. Run `npm run dev` to see it.
+- **No APK in the repo.** The build sandbox has no JDK, Android SDK, Gradle or
+  Maven access (all firewalled), and the CI token lacks `workflows` permission,
+  so the committed workflow must be enabled by a repo admin before it will run.
+  Use `npm run android:apk` locally, or the Actions artifact once CI runs.
+- **No GPU in CI.** Browser binaries couldn't be downloaded, so the rendered
+  pixels have not been visually verified on a device. Everything CPU-side is
+  tested for real, and `tests/bundle.test.ts` boots the actual shipped bundle
+  against a stubbed WebGL2 context to prove it reaches the title screen without
+  errors — but nobody has *looked* at a frame. Run `npm run dev` to see it.
 - **Commentary** uses the platform TTS voice rather than recorded VO — it reads
   real match context, but it sounds synthetic.
 - **Cloud sync** is Android's backup framework plus manual export codes; there

@@ -20,3 +20,8 @@ android/capacitor-cordova-android-plugins/
 
 # Generated brand source art (large; regenerate as needed)
 assets/brand/*-source.png
+
+# public/ is assembled by `npm run build:public`; the landing page is tracked,
+# the generated game build and CI-produced APKs are not.
+public/app/
+public/apk/
