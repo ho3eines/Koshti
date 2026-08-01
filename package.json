@@ -2,7 +2,7 @@
   "name": "koshti",
   "version": "1.0.0",
   "private": true,
-  "description": "Koshti \u2014 AAA-quality 3D wrestling career game for Android",
+  "description": "Koshti — AAA-quality 3D wrestling career game for Android",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -38,6 +38,7 @@
     "@types/jsdom": "^28.0.3",
     "@types/three": "^0.185.3",
     "jsdom": "^30.0.1",
+    "playwright": "^1.62.1",
     "typescript": "^5.9.3",
     "vite": "^8.2.0",
     "vitest": "^4.1.10"

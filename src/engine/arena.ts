@@ -112,31 +112,36 @@ export class Arena {
     this.group.add(floor);
 
     // ------------------------------------------------------------ lighting
-    const amb = new THREE.HemisphereLight(mood.keyColor, mood.fillColor, mood.ambient * 1.4);
+    const amb = new THREE.HemisphereLight(mood.keyColor, mood.fillColor, mood.ambient * 1.2);
     this.group.add(amb);
 
-    this.keyLight = new THREE.DirectionalLight(mood.keyColor, 1.5);
-    this.keyLight.position.set(5, 11, 5);
+    this.keyLight = new THREE.DirectionalLight(mood.keyColor, 1.9);
+    this.keyLight.position.set(4.5, 13, 4.5);
     if (q.shadows) {
       this.keyLight.castShadow = true;
       this.keyLight.shadow.mapSize.set(q.shadowMapSize, q.shadowMapSize);
       const c = this.keyLight.shadow.camera;
       c.near = 1;
-      c.far = 30;
-      c.left = -9;
-      c.right = 9;
-      c.top = 9;
-      c.bottom = -9;
+      c.far = 32;
+      c.left = -10;
+      c.right = 10;
+      c.top = 10;
+      c.bottom = -10;
       this.keyLight.shadow.bias = -0.0012;
-      this.keyLight.shadow.normalBias = 0.022;
-      this.keyLight.shadow.radius = q.softShadows ? 3 : 1;
+      this.keyLight.shadow.normalBias = 0.024;
+      this.keyLight.shadow.radius = q.softShadows ? 3.5 : 1;
     }
     this.group.add(this.keyLight);
     this.group.add(this.keyLight.target);
 
-    this.rimLight = new THREE.DirectionalLight(mood.rimColor, 1.1);
-    this.rimLight.position.set(-6, 7, -7);
+    this.rimLight = new THREE.DirectionalLight(mood.rimColor, 1.3);
+    this.rimLight.position.set(-6.5, 8, -7.5);
     this.group.add(this.rimLight);
+
+    // A warm kicker to pop skin tones and sell the arena lighting.
+    const kicker = new THREE.DirectionalLight(0xffc38a, 0.55);
+    kicker.position.set(2, 5, -6);
+    this.group.add(kicker);
 
     if (q.maxLights >= 3) {
       this.spotL = new THREE.SpotLight(
@@ -172,26 +177,102 @@ export class Arena {
     // ------------------------------------------------- volumetric-ish beams
     if (q.volumetricLights) {
       const beamGeo = this.track(new THREE.ConeGeometry(3.1, 11, 24, 1, true));
-      for (let i = 0; i < 4; i++) {
+      const beamCount = q.crowdDetail >= 2 ? 8 : 4;
+      for (let i = 0; i < beamCount; i++) {
+        const isWarm = i % 3 !== 2;
         const beamMat = this.track(
           new THREE.MeshBasicMaterial({
-            color: i % 2 === 0 ? mood.keyColor : mood.rimColor,
+            color: isWarm ? mood.keyColor : mood.rimColor,
             transparent: true,
-            opacity: 0.05,
+            opacity: 0.07,
             side: THREE.DoubleSide,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
           }),
         );
         const beam = new THREE.Mesh(beamGeo, beamMat);
-        const a = (i / 4) * Math.PI * 2 + 0.4;
+        const a = (i / beamCount) * Math.PI * 2 + 0.4;
         beam.position.set(Math.cos(a) * 5.5, 6.2, Math.sin(a) * 5.5);
         beam.rotation.z = Math.cos(a) * 0.32;
         beam.rotation.x = -Math.sin(a) * 0.32;
         this.beams.push(beam);
         this.group.add(beam);
       }
+
+      // A subtle central overhead beam for that arena-show feel.
+      const coreGeo = this.track(new THREE.ConeGeometry(4.2, 12, 28, 1, true));
+      const coreMat = this.track(
+        new THREE.MeshBasicMaterial({
+          color: mood.keyColor,
+          transparent: true,
+          opacity: 0.035,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      );
+      const core = new THREE.Mesh(coreGeo, coreMat);
+      core.position.set(0, 6.4, 0);
+      this.beams.push(core);
+      this.group.add(core);
     }
+
+    // Ropes around the mat sell the wrestling ring instantly.
+    const ropeMat = this.track(
+      new THREE.MeshStandardMaterial({
+        color: 0xf1e6c8,
+        roughness: 0.55,
+        emissive: 0x2a1f0b,
+        emissiveIntensity: 0.3,
+      }),
+    );
+    const postMat = this.track(
+      new THREE.MeshStandardMaterial({ color: 0x20252f, roughness: 0.5, metalness: 0.7 }),
+    );
+    const ropeRadius = 5.55;
+    const ropeHeights = [0.55, 0.95, 1.35];
+    const ropeSeg = 80;
+    for (const rh of ropeHeights) {
+      const g = this.track(new THREE.TorusGeometry(ropeRadius, 0.025, 6, ropeSeg));
+      const rope = new THREE.Mesh(g, ropeMat);
+      rope.position.y = rh;
+      rope.rotation.x = Math.PI / 2;
+      rope.receiveShadow = q.shadows;
+      this.group.add(rope);
+    }
+    // Corner posts.
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const post = new THREE.Mesh(
+        this.track(new THREE.CylinderGeometry(0.08, 0.08, 1.7, 10)),
+        postMat,
+      );
+      post.position.set(Math.cos(a) * ropeRadius, 0.85, Math.sin(a) * ropeRadius);
+      post.castShadow = q.shadows;
+      this.group.add(post);
+      // Corner pad in accent color.
+      const padMat = this.track(
+        new THREE.MeshStandardMaterial({ color: i % 2 ? mood.matColor : mood.canvasColor, roughness: 0.7 }),
+      );
+      const pad = new THREE.Mesh(this.track(new THREE.BoxGeometry(0.28, 0.45, 0.28)), padMat);
+      pad.position.set(Math.cos(a) * (ropeRadius - 0.02), 1.3, Math.sin(a) * (ropeRadius - 0.02));
+      this.group.add(pad);
+    }
+
+    // Mat logo — an emissive central disc so the center of the stage reads.
+    const logoGeo = this.track(new THREE.CircleGeometry(0.85, 48));
+    const logoMat = this.track(
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: mood.keyColor,
+        emissiveIntensity: 0.25,
+        roughness: 0.6,
+      }),
+    );
+    const logo = new THREE.Mesh(logoGeo, logoMat);
+    logo.rotation.x = -Math.PI / 2;
+    logo.position.y = 0.009;
+    this.group.add(logo);
 
     // ---------------------------------------------------------- the lights rig
     if (this.def.capacity > 0) {

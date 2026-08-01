@@ -84,6 +84,12 @@ export class InputManager {
     this.el.addEventListener('pointermove', this.onMove, { passive: false });
     this.el.addEventListener('pointerup', this.onUp, { passive: false });
     this.el.addEventListener('pointercancel', this.onUp, { passive: false });
+    // Support keyboard for desktop testing (WASD / arrows + JKLU space).
+    this.el.setAttribute('tabindex', '0');
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
+    globalThis.addEventListener('keydown', this.onKeyDown);
+    globalThis.addEventListener('keyup', this.onKeyUp);
   }
 
   disable(): void {
@@ -93,6 +99,8 @@ export class InputManager {
     this.el.removeEventListener('pointermove', this.onMove);
     this.el.removeEventListener('pointerup', this.onUp);
     this.el.removeEventListener('pointercancel', this.onUp);
+    globalThis.removeEventListener('keydown', this.onKeyDown);
+    globalThis.removeEventListener('keyup', this.onKeyUp);
     this.reset();
   }
 
@@ -105,6 +113,7 @@ export class InputManager {
     this.stick.y = 0;
     this.stick.active = false;
     this.stickVisual.visible = false;
+    this.keys = {};
   }
 
   haptic(pattern: number | number[] = 12): void {
@@ -116,6 +125,49 @@ export class InputManager {
     }
   }
 
+  // ---------------------------------------------------------------- keyboard
+  private keys: Record<string, boolean> = {};
+  private onKeyDown(e: KeyboardEvent): void {
+    if (!this.enabled) return;
+    const k = e.key.toLowerCase();
+    this.keys[k] = true;
+    // Actions
+    if (k === ' ') this.bus.emit('action', { id: 'guard_on' });
+    if (k === 'j' || k === 'z') this.bus.emit('action', { id: 'reverse' });
+    if (k === 'k' || k === 'x') this.bus.emit('action', { id: 'escape' });
+    if (k === 'l' || k === 'c') this.bus.emit('action', { id: 'pin' });
+    if (k === 'q') this.bus.emit('gesture', { name: 'swipe_up', x: 0, y: 0, power: 0.8 });
+    if (k === 'e') this.bus.emit('gesture', { name: 'swipe_down', x: 0, y: 0, power: 0.8 });
+    if (k === '1') this.bus.emit('gesture', { name: 'tap', x: 0, y: 0, power: 0.7 });
+    if (k === '2') this.bus.emit('gesture', { name: 'double_tap', x: 0, y: 0, power: 1 });
+  }
+  private onKeyUp(e: KeyboardEvent): void {
+    const k = e.key.toLowerCase();
+    this.keys[k] = false;
+    if (k === ' ') this.bus.emit('action', { id: 'guard_off' });
+  }
+
+  /** Drive stick from keyboard if no touch active — call each frame. */
+  pollKeyboard(): void {
+    if (this.stickTouch !== null) return; // touch wins
+    let x = 0, y = 0;
+    if (this.keys['a'] || this.keys['arrowleft']) x -= 1;
+    if (this.keys['d'] || this.keys['arrowright']) x += 1;
+    if (this.keys['w'] || this.keys['arrowup']) y -= 1;
+    if (this.keys['s'] || this.keys['arrowdown']) y += 1;
+    const mag = Math.hypot(x, y);
+    if (mag > 0) {
+      x /= mag; y /= mag;
+      this.stick.x = x * 0.85;
+      this.stick.y = y * 0.85;
+      this.stick.active = true;
+    } else if (this.stick.active && !this.touches.size) {
+      this.stick.x = 0;
+      this.stick.y = 0;
+      this.stick.active = false;
+    }
+  }
+
   /** Is this screen coordinate in the movement zone? */
   private isStickZone(x: number): boolean {
     const w = this.el.clientWidth;
@@ -123,7 +175,6 @@ export class InputManager {
   }
 
   private onDown(e: PointerEvent): void {
-    // Ignore touches that land on UI buttons — they handle themselves.
     const target = e.target as HTMLElement;
     if (target?.closest?.('[data-ui-button]')) return;
 
@@ -188,7 +239,6 @@ export class InputManager {
       const clamped = Math.min(d, this.stickRadius);
       const nx = d > 0.001 ? (dx / d) * (clamped / this.stickRadius) : 0;
       const ny = d > 0.001 ? (dy / d) * (clamped / this.stickRadius) : 0;
-      // Small dead-zone so resting thumbs don't drift the wrestler.
       const dead = 0.14;
       const mag = Math.hypot(nx, ny);
       if (mag < dead) {
@@ -237,7 +287,6 @@ export class InputManager {
     const dy = t.y - t.startY;
     const dist = Math.hypot(dx, dy);
 
-    // Circle gesture (used for reversals) — check before straight swipes.
     if (dist < 90 && t.path.length > 10 && this.detectCircle(t.path)) {
       this.bus.emit('gesture', { name: 'circle', x: t.x, y: t.y, power: 1 });
       this.haptic([10, 30, 10]);
@@ -275,7 +324,7 @@ export class InputManager {
 
   /**
    * Circle detection: total signed angular travel around the path centroid
-   * exceeding ~300°. Robust enough for a thumb on a phone.
+   * exceeding ~300°.
    */
   private detectCircle(path: Array<{ x: number; y: number }>): boolean {
     let cx = 0;
@@ -302,7 +351,6 @@ export class InputManager {
       minR = Math.min(minR, r);
       maxR = Math.max(maxR, r);
     }
-    // Must be roughly circular, not a scribble.
     const roundness = minR / Math.max(1, maxR);
     return Math.abs(total) > 5.2 && roundness > 0.32 && maxR > 18;
   }

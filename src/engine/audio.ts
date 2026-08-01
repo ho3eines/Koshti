@@ -626,8 +626,9 @@ export class AudioEngine {
   // ------------------------------------------------------------ commentary
 
   /**
-   * Commentary via the platform TTS voice — no recorded VO to ship, and it
-   * reads real match context (names, moves, scores).
+   * Persian in-match commentary ("گزارش‌گر"). Uses the platform TTS voice set
+   * to Persian (fa-IR) where available, falls back to any Persian voice, and
+   * finally to the default. No recorded VO to ship — every line is dynamic.
    */
   say(line: string, priority = false): void {
     if (!this.settings.commentary || !this.speechAvailable) return;
@@ -639,13 +640,23 @@ export class AudioEngine {
       if (priority) synth.cancel();
       else if (synth.speaking) return;
       const u = new SpeechSynthesisUtterance(line);
-      u.rate = 1.18;
-      u.pitch = 0.92;
-      u.volume = clamp01(this.settings.master * 0.85);
+      u.lang = 'fa-IR';
+      u.rate = 1.05;
+      u.pitch = 1.05;
+      u.volume = clamp01(this.settings.master * 0.9);
+      // Try to pick a Persian voice if one exists on this device.
+      const voices = synth.getVoices();
+      const fa = voices.find((v) => /fa[-_]?IR|persian|farsi/i.test(v.lang + ' ' + v.name));
+      if (fa) u.voice = fa;
       synth.speak(u);
     } catch {
       /* TTS unavailable */
     }
+  }
+
+  /** Say a Persian line with fallback English (if user switches later). */
+  sayFa(faLine: string, _enLine: string, priority = false): void {
+    this.say(faLine, priority);
   }
 
   stopCommentary(): void {

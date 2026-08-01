@@ -21,6 +21,11 @@ const NICKNAMES = [
   'The Mountain', 'Quicksilver', 'The Vice', 'Blackout', 'The Machine', 'Nightfall',
   'The Bear', 'Coldsteel', 'The Riddle', 'Sandstorm',
 ];
+const NICKNAMES_FA = [
+  'سندان', 'آهنین‌دست', 'گردباد', 'فولادگردن', 'جراح', 'تندر غلتان',
+  'کوه', 'جیوه', 'گیره', 'خاموشی', 'ماشین', 'شب‌نشین',
+  'خرس', 'فولاد سرد', 'معما', 'طوفان شن',
+];
 
 const TINTS = [0xd94f3d, 0x2f6fd0, 0x38a169, 0x8b5cf6, 0xf59e0b, 0x0ea5e9, 0xec4899, 0x14b8a6];
 
@@ -28,6 +33,7 @@ export interface RosterWrestler {
   id: string;
   name: string;
   nickname: string;
+  nickname_fa?: string;
   style: FightingStyle;
   clubId: string;
   attributes: Attributes;
@@ -107,11 +113,15 @@ export const generateWrestler = (
   const attrs = attributesFor(rng, style, target);
   const first = rng.pick(FIRST);
   const last = rng.pick(LAST);
+  const nickIdx = Math.floor(rng.range(0, NICKNAMES.length));
+  const nickname = NICKNAMES[nickIdx];
+  const nickname_fa = NICKNAMES_FA[nickIdx] ?? nickname;
 
   return {
     id: `${division}_${index}_${first}${last}`.toLowerCase().replace(/\s+/g, ''),
     name: `${first} ${last}`,
-    nickname: rng.pick(NICKNAMES),
+    nickname,
+    nickname_fa,
     style,
     clubId,
     attributes: attrs,

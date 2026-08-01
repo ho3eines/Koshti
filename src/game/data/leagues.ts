@@ -5,7 +5,9 @@ export type DivisionId = 'amateur' | 'semipro' | 'professional' | 'elite' | 'cha
 export interface DivisionDef {
   id: DivisionId;
   name: string;
+  name_fa?: string;
   subtitle: string;
+  subtitle_fa?: string;
   /** Opponent overall rating band. */
   ratingRange: [number, number];
   /** AI difficulty scalar fed into the combat sim. */
@@ -49,15 +51,15 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
     capacity: 0,
     crowd: 0.05,
     mood: {
-      keyColor: 0xfff2dd,
-      rimColor: 0x8fb4ff,
-      fillColor: 0x40506b,
-      fogColor: 0x0d1018,
-      fogDensity: 0.022,
-      matColor: 0x2a4a7a,
-      canvasColor: 0x14406e,
-      spotIntensity: 1.6,
-      ambient: 0.55,
+      keyColor: 0xffd9a3,
+      rimColor: 0x7aa8ff,
+      fillColor: 0x2e3d57,
+      fogColor: 0x0a0d15,
+      fogDensity: 0.024,
+      matColor: 0xd9401c,
+      canvasColor: 0x8f2816,
+      spotIntensity: 1.8,
+      ambient: 0.6,
     },
   },
   community_gym: {
@@ -71,10 +73,10 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
       fillColor: 0x33405a,
       fogColor: 0x0b0e15,
       fogDensity: 0.026,
-      matColor: 0x8a2f2f,
-      canvasColor: 0x9c3a2e,
-      spotIntensity: 2.1,
-      ambient: 0.4,
+      matColor: 0xc43a2a,
+      canvasColor: 0x7e271d,
+      spotIntensity: 2.2,
+      ambient: 0.45,
     },
   },
   city_arena: {
@@ -89,9 +91,9 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
       fogColor: 0x05070d,
       fogDensity: 0.032,
       matColor: 0x1f6f5c,
-      canvasColor: 0x1b7a63,
-      spotIntensity: 2.8,
-      ambient: 0.28,
+      canvasColor: 0x145d4a,
+      spotIntensity: 2.9,
+      ambient: 0.3,
     },
   },
   national_dome: {
@@ -106,9 +108,9 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
       fogColor: 0x04050b,
       fogDensity: 0.036,
       matColor: 0x2b3a8f,
-      canvasColor: 0x2d3f9e,
-      spotIntensity: 3.4,
-      ambient: 0.22,
+      canvasColor: 0x222f7a,
+      spotIntensity: 3.5,
+      ambient: 0.24,
     },
   },
   world_colosseum: {
@@ -121,11 +123,11 @@ export const ARENAS: Record<ArenaId, ArenaDef> = {
       rimColor: 0xffb347,
       fillColor: 0x241a2e,
       fogColor: 0x03040a,
-      fogDensity: 0.04,
-      matColor: 0x6d1f4a,
-      canvasColor: 0x7d2352,
-      spotIntensity: 4.0,
-      ambient: 0.18,
+      fogDensity: 0.042,
+      matColor: 0xb5201f,
+      canvasColor: 0x901818,
+      spotIntensity: 4.2,
+      ambient: 0.2,
     },
   },
 };
@@ -134,7 +136,9 @@ export const DIVISIONS: readonly DivisionDef[] = [
   {
     id: 'amateur',
     name: 'Amateur Circuit',
+    name_fa: 'مدار آماتور',
     subtitle: 'Prove you belong on the mat.',
+    subtitle_fa: 'ثابت کن که روی تشک جایی داری.',
     ratingRange: [34, 48],
     difficulty: 0.55,
     winsToPromote: 3,
@@ -148,7 +152,9 @@ export const DIVISIONS: readonly DivisionDef[] = [
   {
     id: 'semipro',
     name: 'Semi-Pro League',
+    name_fa: 'لیگ نیمه‌حرفه‌ای',
     subtitle: 'Real clubs. Real rivalries.',
+    subtitle_fa: 'باشگاه‌های واقعی، رقابت‌های واقعی.',
     ratingRange: [46, 60],
     difficulty: 0.7,
     winsToPromote: 4,
@@ -162,7 +168,9 @@ export const DIVISIONS: readonly DivisionDef[] = [
   {
     id: 'professional',
     name: 'Professional Division',
+    name_fa: 'بخش حرفه‌ای',
     subtitle: 'Sponsors, cameras, pressure.',
+    subtitle_fa: 'حامیان، دوربین‌ها، فشار.',
     ratingRange: [58, 74],
     difficulty: 0.85,
     winsToPromote: 5,
@@ -176,7 +184,9 @@ export const DIVISIONS: readonly DivisionDef[] = [
   {
     id: 'elite',
     name: 'Elite Series',
+    name_fa: 'سری الیت',
     subtitle: 'The top 1% of the sport.',
+    subtitle_fa: 'یک درصد برتر این رشته.',
     ratingRange: [72, 88],
     difficulty: 0.95,
     winsToPromote: 5,
@@ -190,7 +200,9 @@ export const DIVISIONS: readonly DivisionDef[] = [
   {
     id: 'champion',
     name: "Champion's Circle",
+    name_fa: 'حلقه قهرمانان',
     subtitle: 'Immortality is one match away.',
+    subtitle_fa: 'جاودانگی یک مسابقه با تو فاصله دارد.',
     ratingRange: [86, 99],
     difficulty: 1.0,
     winsToPromote: 6,
@@ -217,9 +229,12 @@ export const nextDivision = (id: DivisionId): DivisionDef | null => {
 export interface ClubDef {
   id: string;
   name: string;
+  name_fa?: string;
   city: string;
+  city_fa?: string;
   colors: [string, string];
   motto: string;
+  motto_fa?: string;
   /** Preferred style of wrestlers coming out of this club. */
   style: FightingStyle;
   prestige: number;
@@ -229,54 +244,72 @@ export const CLUBS: readonly ClubDef[] = [
   {
     id: 'iron_bears',
     name: 'Iron Bears',
+    name_fa: 'خرس‌های آهنین',
     city: 'Novgorod',
+    city_fa: 'نووگورود',
     colors: ['#ff5d47', '#3a0f0a'],
     motto: 'Break the base, break the man.',
+    motto_fa: 'پایه را بشکن، مرد را بشکن.',
     style: 'power',
     prestige: 0.86,
   },
   {
     id: 'silk_tigers',
     name: 'Silk Tigers',
+    name_fa: 'ببرهای ابریشمی',
     city: 'Isfahan',
+    city_fa: 'اصفهان',
     colors: ['#fbbf24', '#3a2a05'],
     motto: 'Patience is a weapon.',
+    motto_fa: 'صبر، یک سلاح است.',
     style: 'technical',
     prestige: 0.92,
   },
   {
     id: 'storm_falcons',
     name: 'Storm Falcons',
+    name_fa: 'شاهین‌های طوفان',
     city: 'Osaka',
+    city_fa: 'اوزاکا',
     colors: ['#38bdf8', '#05243a'],
     motto: 'Faster than the whistle.',
+    motto_fa: 'تندتر از سوت.',
     style: 'speed',
     prestige: 0.81,
   },
   {
     id: 'granite_wolves',
     name: 'Granite Wolves',
+    name_fa: 'گرگ‌های خارایی',
     city: 'Ankara',
+    city_fa: 'آنکارا',
     colors: ['#94a3b8', '#161b22'],
     motto: 'The pack always finishes.',
+    motto_fa: 'گله همیشه کار را تمام می‌کند.',
     style: 'allround',
     prestige: 0.78,
   },
   {
     id: 'crimson_lions',
     name: 'Crimson Lions',
+    name_fa: 'شیران سرخ',
     city: 'Lagos',
+    city_fa: 'لاگوس',
     colors: ['#f472b6', '#3b0a25'],
     motto: 'Roar first. Pin second.',
+    motto_fa: 'اول غرش، بعد پین.',
     style: 'power',
     prestige: 0.74,
   },
   {
     id: 'azure_cobras',
     name: 'Azure Cobras',
+    name_fa: 'کبراهای لاجوردی',
     city: 'Tbilisi',
+    city_fa: 'تفلیس',
     colors: ['#4ade80', '#052e1a'],
     motto: 'Strike where they are soft.',
+    motto_fa: 'جایی که نرم است ضربه بزن.',
     style: 'technical',
     prestige: 0.88,
   },

@@ -1,4 +1,5 @@
 import { audio } from '../../engine/audio';
+import { t, faNum } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { getMove, type MoveDef } from '../../game/data/moves';
 import { ARENAS, type ArenaId } from '../../game/data/leagues';
@@ -18,6 +19,18 @@ export interface MatchScreenParams {
   overlayHost?: (host: HTMLElement) => void;
   showIntro?: boolean;
 }
+
+const moveLabel = (m: MoveDef): { name: string; cost: string } => {
+  // Keep the short move ids as internal; show a friendlier label in Persian.
+  const key = `move.${m.id}`;
+  const name = t(key);
+  return {
+    name: name === key ? m.name.replace(/_/g, ' ').toUpperCase() : name,
+    cost: `${faNum(m.staminaCost)} ST · ${faNum(Math.round(m.damage))} DMG`,
+  };
+};
+
+const stanceName = (s: string): string => t(`stance.${s}`, {}, s.toUpperCase());
 
 /**
  * The in-match screen: 3D view + HUD + touch controls.
@@ -58,7 +71,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
   const oMo = el('i', { style: 'width:0%' });
 
   const timerNode = el('div', { class: 'hud-timer', text: '2:00' });
-  const roundNode = el('div', { class: 'hud-round', text: 'Round 1' });
+  const roundNode = el('div', { class: 'hud-round', text: t('match.round', { n: 1, total: faNum(p.config.rounds) }) });
   const scoreP = el('span', { class: 'p', text: '0' });
   const scoreO = el('span', { class: 'o', text: '0' });
 
@@ -88,7 +101,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
     ]),
   );
 
-  const stanceNode = el('div', { class: 'hud-stance', text: 'STANDING' });
+  const stanceNode = el('div', { class: 'hud-stance', text: stanceName('standing') });
   hud.appendChild(stanceNode);
 
   const comboNode = el('div', { class: 'combo-display' });
@@ -101,7 +114,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
       {
         class: 'icon-btn',
         'data-ui-button': '1',
-        style: 'position:absolute;top:calc(var(--safe-t) + 78px);left:calc(var(--safe-l) + 10px);width:34px;height:34px;font-size:14px;pointer-events:auto',
+        style: 'position:absolute;top:calc(var(--safe-t) + 78px);inset-inline-start:calc(var(--safe-l) + 10px);width:34px;height:34px;font-size:14px;pointer-events:auto',
         onclick: () => showPause(),
       },
       [document.createTextNode('❚❚')],
@@ -114,10 +127,10 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
   const stickZone = el('div', { class: 'stick-zone' }, [stickBase, stickKnob]);
 
   // -------------------------------------------------------------- buttons
-  const btnGuard = actionButton('🛡', 'Guard', 'act-btn');
-  const btnReverse = actionButton('↺', 'Reverse', 'act-btn counter');
-  const btnEscape = actionButton('⤴', 'Escape', 'act-btn');
-  const btnPin = actionButton('⬇', 'Pin', 'act-btn primary');
+  const btnGuard = actionButton('🛡', t('match.guard'), 'act-btn');
+  const btnReverse = actionButton('↺', t('match.reverse'), 'act-btn counter');
+  const btnEscape = actionButton('⤴', t('match.escape'), 'act-btn');
+  const btnPin = actionButton('⬇', t('match.pin'), 'act-btn primary');
 
   const actionPad = el('div', { class: 'action-pad' }, [btnReverse, btnGuard, btnEscape, btnPin]);
 
@@ -130,9 +143,9 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
   hud.appendChild(moveStrip);
   hud.appendChild(controlsHost);
 
-  const overlayHost = el('div');
-  hud.appendChild(overlayHost);
-  p.overlayHost?.(overlayHost);
+  const overlayHostLocal = el('div');
+  hud.appendChild(overlayHostLocal);
+  p.overlayHost?.(overlayHostLocal);
 
   app.mount(hud);
 
@@ -174,6 +187,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
       .sort((a, b) => catOrder(a) - catOrder(b) || a.damage - b.damage);
 
     for (const m of available) {
+      const lbl = moveLabel(m);
       const btn = el(
         'button',
         {
@@ -182,8 +196,8 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
           'data-move': m.id,
         },
         [
-          document.createTextNode(m.name),
-          el('span', { class: 'cost', text: `${m.staminaCost} ST · ${Math.round(m.damage)} DMG` }),
+          document.createTextNode(lbl.name),
+          el('span', { class: 'cost', text: lbl.cost }),
         ],
       );
       bindTap(btn, () => controller.action(`move:${m.id}`));
@@ -216,18 +230,18 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
     pMoBar.classList.toggle('full', momoFull);
 
     // Timer.
-    const t = Math.max(0, sim.roundTime);
-    timerNode.textContent = formatTime(t);
-    timerNode.classList.toggle('urgent', t < 15 && t > 0);
+    const timeLeft = Math.max(0, sim.roundTime);
+    timerNode.textContent = formatTime(timeLeft);
+    timerNode.classList.toggle('urgent', timeLeft < 15 && timeLeft > 0);
     roundNode.textContent =
-      sim.intermission > 0 ? 'Break' : `Round ${sim.round} / ${p.config.rounds}`;
-    scoreP.textContent = String(pl.score);
-    scoreO.textContent = String(op.score);
+      sim.intermission > 0 ? t('match.break') : t('match.round', { n: String(sim.round), total: String(p.config.rounds) });
+    scoreP.textContent = faNum(pl.score);
+    scoreO.textContent = faNum(op.score);
 
     // Stance.
     if (sim.stance !== lastStance) {
       lastStance = sim.stance;
-      stanceNode.textContent = sim.stance.toUpperCase();
+      stanceNode.textContent = stanceName(sim.stance);
       rebuildMoveStrip();
     }
 
@@ -271,7 +285,6 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
       if (comboTimer <= 0) comboNode.classList.remove('show');
     }
 
-    // Keep move strip fresh if unlocks change mid-match (training rewards).
     if (pl.cfg.moves.filter((m) => getMove(m).range === sim.stance).length !== lastMoveCount) {
       rebuildMoveStrip();
     }
@@ -279,14 +292,14 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
 
   const handleUiEvent = (e: SimEvent): void => {
     if (e.t === 'move_hit' && e.side === 'player' && e.combo >= 2) {
-      comboNode.textContent = `${e.combo}x COMBO`;
+      comboNode.textContent = t('match.combo', { n: faNum(e.combo) });
       comboNode.classList.remove('show');
       void comboNode.offsetWidth; // restart the animation
       comboNode.classList.add('show');
       comboTimer = 1.6;
     }
     if (e.t === 'round_start' && e.round > 1) {
-      stanceNode.textContent = 'STANDING';
+      stanceNode.textContent = stanceName('standing');
     }
   };
 
@@ -304,11 +317,11 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
     };
     backdrop.appendChild(
       el('div', { class: 'modal' }, [
-        el('h2', { text: 'Paused' }),
-        el('p', { text: `${p.config.title ?? 'Match'} · Round ${sim.round}` }),
+        el('h2', { text: t('match.paused') }),
+        el('p', { text: t('match.paused_body', { title: p.config.title ?? t('match.main_event'), round: faNum(sim.round) }) }),
         el('div', { class: 'btn-row mb' }, [
           el('button', { class: 'btn', onclick: () => { audio.play('ui_confirm'); resume(); } }, [
-            document.createTextNode('Resume'),
+            document.createTextNode(t('match.resume')),
           ]),
         ]),
         el(
@@ -321,7 +334,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
               app.go('settings', { returnTo: 'hub' });
             },
           },
-          [document.createTextNode('Settings')],
+          [document.createTextNode(t('match.settings'))],
         ),
         el(
           'button',
@@ -335,7 +348,7 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
               controller.retire();
             },
           },
-          [document.createTextNode('Forfeit Match')],
+          [document.createTextNode(t('match.forfeit'))],
         ),
       ]),
     );
@@ -353,9 +366,12 @@ export const renderMatch = (app: App, params?: Record<string, unknown>): void =>
   // ------------------------------------------------------------------- go
   app.setFrameCallback(tick);
 
+  const arenaDef = ARENAS[p.arena];
+  const arenaName = t(`arena.${p.arena}`, {}, arenaDef.name);
+
   if (p.showIntro !== false) {
-    showIntroCinematic(app, p.config, ARENAS[p.arena].name, () => {
-      /* intro visual only; controller handles the timing */
+    showIntroCinematic(app, p.config, arenaName, () => {
+      /* intro visual only */
     });
     controller.startIntro(3.4);
   } else {
@@ -421,16 +437,16 @@ export const showIntroCinematic = (
   const layer = el('div', { class: 'cinematic cine-bars' }, [
     el('div', { class: 'cine-text' }, [
       el('div', { class: 'cine-sub', text: arenaName }),
-      el('div', { class: 'cine-title', text: cfg.title ?? 'MAIN EVENT' }),
+      el('div', { class: 'cine-title', text: cfg.title ?? t('match.main_event') }),
       el('div', { class: 'cine-vs' }, [
         el('div', { class: 'cine-fighter' }, [
           el('div', { class: 'nm', text: cfg.player.shortName.toUpperCase() }),
-          el('div', { class: 'rt', text: cfg.player.style }),
+          el('div', { class: 'rt', text: t(`style.${cfg.player.style}`) }),
         ]),
-        el('div', { class: 'x', text: 'VS' }),
+        el('div', { class: 'x', text: t('match.vs') }),
         el('div', { class: 'cine-fighter' }, [
           el('div', { class: 'nm', text: cfg.opponent.shortName.toUpperCase() }),
-          el('div', { class: 'rt', text: cfg.opponent.style }),
+          el('div', { class: 'rt', text: t(`style.${cfg.opponent.style}`) }),
         ]),
       ]),
       cfg.subtitle ? el('div', { class: 'cine-sub', style: 'margin-top:14px', text: cfg.subtitle }) : null,

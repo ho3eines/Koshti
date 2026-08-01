@@ -1,4 +1,5 @@
 import { audio } from '../../engine/audio';
+import { t, faNum } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { ATTRIBUTE_KEYS, ATTRIBUTE_META, ATTRIBUTE_CAP, overallRating } from '../../game/data/attributes';
 import { CLUB_BY_ID, DIVISION_BY_ID } from '../../game/data/leagues';
@@ -21,11 +22,14 @@ export const renderProfile = (app: App): void => {
   screen.appendChild(
     el('div', { class: 'topbar' }, [
       el('button', { class: 'icon-btn', onclick: () => { audio.play('ui_back'); app.go('hub'); } }, [
-        document.createTextNode('‹'),
+        document.createTextNode('›'),
       ]),
       el('h1', {}, [
-        document.createTextNode('PROFILE'),
-        el('span', { class: 'sub', text: `${div.name} · ${club?.name ?? 'Independent'}` }),
+        document.createTextNode(t('profile.title')),
+        el('span', {
+          class: 'sub',
+          text: `${div.name_fa ?? div.name} · ${club?.name_fa ?? club?.name ?? t('profile.independent')}`,
+        }),
       ]),
     ]),
   );
@@ -37,15 +41,18 @@ export const renderProfile = (app: App): void => {
 
   const drawTabs = (): void => {
     tabs.replaceChildren();
-    for (const t of [
-      { id: 'overview' as const, label: 'Overview' },
-      { id: 'achievements' as const, label: `Awards ${save.achievements.length}/${ACHIEVEMENTS.length}` },
-      { id: 'history' as const, label: 'History' },
+    for (const tb of [
+      { id: 'overview' as const, label: t('profile.overview') },
+      {
+        id: 'achievements' as const,
+        label: `${t('profile.achievements_tab')} ${faNum(save.achievements.length)}/${faNum(ACHIEVEMENTS.length)}`,
+      },
+      { id: 'history' as const, label: t('profile.history') },
     ]) {
-      const btn = el('button', { class: `tree-tab ${tab === t.id ? 'active' : ''}`, text: t.label });
+      const btn = el('button', { class: `tree-tab ${tab === tb.id ? 'active' : ''}`, text: tb.label });
       btn.addEventListener('click', () => {
         audio.play('ui_tap');
-        tab = t.id;
+        tab = tb.id;
         draw();
       });
       tabs.appendChild(btn);
@@ -77,19 +84,19 @@ export const renderProfile = (app: App): void => {
             text: p.name.charAt(0).toUpperCase(),
           }),
           el('div', { class: 'grow' }, [
-            el('div', { style: 'font-family:var(--font-display);font-size:22px;letter-spacing:.5px', text: p.name }),
-            el('div', { class: 'tiny', text: `Level ${p.level} · ${style.name}` }),
-            el('span', { class: 'style-pill', style: `color:${style.color}`, text: div.name }),
+            el('div', { style: 'font-family:var(--font-display);font-size:22px', text: p.name }),
+            el('div', { class: 'tiny', text: `${t('profile.level', { lvl: p.level })} · ${style.name_fa ?? style.name}` }),
+            el('span', { class: 'style-pill', style: `color:${style.color}`, text: div.name_fa ?? div.name }),
           ]),
           el('div', { style: 'text-align:center' }, [
-            el('div', { style: `font-family:var(--font-display);font-size:34px;line-height:1;color:${div.color}`, text: String(rating) }),
-            el('div', { style: 'font-size:8px;letter-spacing:1.4px;color:var(--text-faint)', text: 'OVERALL' }),
+            el('div', { style: `font-family:var(--font-display);font-size:34px;line-height:1;color:${div.color}`, text: faNum(rating) }),
+            el('div', { style: 'font-size:8px;letter-spacing:1.4px;color:var(--text-faint)', text: t('profile.overall') }),
           ]),
         ]),
         el('div', { style: 'margin-top:12px' }, [
           el('div', { class: 'bar-label' }, [
-            el('span', { text: 'Experience' }),
-            el('b', { text: `${p.xp} / ${xpNeeded}` }),
+            el('span', { text: t('profile.experience') }),
+            el('b', { text: `${faNum(p.xp)} / ${faNum(xpNeeded)}` }),
           ]),
           el('div', { class: 'bar xp' }, [el('i', { style: `width:${(p.xp / xpNeeded) * 100}%` })]),
         ]),
@@ -97,68 +104,78 @@ export const renderProfile = (app: App): void => {
     );
 
     // Career record.
-    body.appendChild(el('div', { class: 'section-label', text: 'Career record' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('profile.career_record') }));
     body.appendChild(
       el('div', { class: 'card' }, [
         el('div', { class: 'stat-grid' }, [
-          statBox(String(save.record.wins), 'Wins'),
-          statBox(String(save.record.losses), 'Losses'),
-          statBox(`${winRate}%`, 'Win Rate'),
-          statBox(String(save.record.pins), 'Pinfalls'),
-          statBox(String(save.record.submissions), 'Submissions'),
-          statBox(String(save.record.knockouts), 'Stoppages'),
-          statBox(String(save.record.bestStreak), 'Best Streak'),
-          statBox(String(save.record.totalReversals), 'Reversals'),
-          statBox(String(save.record.finishersLanded), 'Finishers'),
+          statBox(faNum(save.record.wins), t('profile.wins')),
+          statBox(faNum(save.record.losses), t('profile.losses')),
+          statBox(`${faNum(winRate)}٪`, t('profile.winrate')),
+          statBox(faNum(save.record.pins), t('profile.pins')),
+          statBox(faNum(save.record.submissions), t('profile.submissions')),
+          statBox(faNum(save.record.knockouts), t('profile.stoppages')),
+          statBox(faNum(save.record.bestStreak), t('profile.best_streak')),
+          statBox(faNum(save.record.totalReversals), t('profile.reversals')),
+          statBox(faNum(save.record.finishersLanded), t('profile.finishers')),
         ]),
       ]),
     );
 
     // Attributes.
-    body.appendChild(el('div', { class: 'section-label', text: 'Attributes' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('profile.attributes') }));
     const attrCard = el('div', { class: 'card' });
     for (const key of ATTRIBUTE_KEYS) {
       const meta = ATTRIBUTE_META[key];
       const val = p.attributes[key];
+      const shortKey = `attr.short.${key}`;
       attrCard.appendChild(
         el('div', { class: 'attr-row' }, [
-          el('div', { class: 'attr-name', style: `color:${meta.color}`, text: meta.short }),
+          el('div', { class: 'attr-name', style: `color:${meta.color}`, text: t(shortKey, {}, meta.short) }),
           el('div', { class: 'attr-bar' }, [
             el('i', { style: `width:${(val / ATTRIBUTE_CAP) * 100}%;background:${meta.color}` }),
           ]),
-          el('div', { class: 'attr-val', text: String(val) }),
+          el('div', { class: 'attr-val', text: faNum(val) }),
         ]),
       );
     }
     body.appendChild(attrCard);
 
     // Lifetime stats.
-    body.appendChild(el('div', { class: 'section-label', text: 'Lifetime' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('profile.lifetime') }));
     body.appendChild(
       el('div', { class: 'card' }, [
-        infoRow('Time played', formatDuration(save.stats.totalPlaySeconds)),
-        infoRow('Total XP earned', save.stats.totalXpEarned.toLocaleString()),
-        infoRow('Total coins earned', `🪙${save.stats.totalCoinsEarned.toLocaleString()}`),
-        infoRow('Damage dealt', Math.round(save.stats.totalDamageDealt).toLocaleString()),
-        infoRow('Skills unlocked', String(p.unlockedSkills.length)),
-        infoRow('Moves known', String(p.unlockedMoves.length)),
-        infoRow('Career started', new Date(p.createdAt).toLocaleDateString()),
+        infoRow(t('profile.time_played'), formatDuration(save.stats.totalPlaySeconds)),
+        infoRow(t('profile.total_xp'), faNum(save.stats.totalXpEarned)),
+        infoRow(t('profile.total_coins'), `🪙${faNum(save.stats.totalCoinsEarned)}`),
+        infoRow(t('profile.damage_dealt'), faNum(Math.round(save.stats.totalDamageDealt))),
+        infoRow(t('profile.skills_unlocked'), faNum(p.unlockedSkills.length)),
+        infoRow(t('profile.moves_known'), faNum(p.unlockedMoves.length)),
+        infoRow(t('profile.career_started'), new Date(p.createdAt).toLocaleDateString('fa-IR')),
       ]),
     );
 
     // Titles.
     if (save.league.titlesHeld.length > 0) {
-      body.appendChild(el('div', { class: 'section-label', text: 'Titles' }));
-      const t = el('div', { class: 'card' });
+      body.appendChild(el('div', { class: 'section-label', text: t('profile.titles') }));
+      const tCard = el('div', { class: 'card' });
       for (const title of save.league.titlesHeld) {
-        t.appendChild(
+        const isWorld = title.startsWith('world');
+        const isClub = title.startsWith('club');
+        tCard.appendChild(
           el('div', { class: 'row', style: 'gap:8px;padding:5px 0' }, [
-            el('span', { text: title.startsWith('world') ? '👑' : title.startsWith('club') ? '🛡️' : '🏆' }),
-            el('span', { style: 'font-size:12.5px;font-weight:700', text: title.startsWith('world') ? 'World Champion' : title.startsWith('club') ? 'Club Champion' : 'Tournament Champion' }),
+            el('span', { text: isWorld ? '👑' : isClub ? '🛡️' : '🏆' }),
+            el('span', {
+              style: 'font-size:12.5px;font-weight:700',
+              text: isWorld
+                ? t('profile.world_champ')
+                : isClub
+                  ? t('profile.club_champ')
+                  : t('profile.tournament_champ'),
+            }),
           ]),
         );
       }
-      body.appendChild(t);
+      body.appendChild(tCard);
     }
   };
 
@@ -170,8 +187,11 @@ export const renderProfile = (app: App): void => {
 
     body.appendChild(
       el('div', { class: 'card', style: 'text-align:center' }, [
-        el('div', { style: 'font-family:var(--font-display);font-size:32px;color:var(--gold)', text: `${unlocked.length} / ${ACHIEVEMENTS.length}` }),
-        el('div', { class: 'tiny', text: 'Achievements unlocked' }),
+        el('div', {
+          style: 'font-family:var(--font-display);font-size:32px;color:var(--gold)',
+          text: `${faNum(unlocked.length)} / ${faNum(ACHIEVEMENTS.length)}`,
+        }),
+        el('div', { class: 'tiny', text: t('profile.unlocked_achs') }),
         el('div', { class: 'bar', style: 'margin-top:10px' }, [
           el('i', { style: `width:${(unlocked.length / ACHIEVEMENTS.length) * 100}%;background:var(--gold)` }),
         ]),
@@ -179,10 +199,10 @@ export const renderProfile = (app: App): void => {
     );
 
     if (unlocked.length) {
-      body.appendChild(el('div', { class: 'section-label', text: 'Unlocked' }));
+      body.appendChild(el('div', { class: 'section-label', text: t('profile.unlocked') }));
       for (const a of unlocked) body.appendChild(achievementCard(a, true, owned.get(a.id)));
     }
-    body.appendChild(el('div', { class: 'section-label', text: 'Locked' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('profile.locked') }));
     for (const a of locked) body.appendChild(achievementCard(a, false));
   };
 
@@ -192,7 +212,7 @@ export const renderProfile = (app: App): void => {
       body.appendChild(
         el('div', { class: 'empty-state' }, [
           el('div', { class: 'icon', text: '📋' }),
-          el('div', { text: 'No matches yet. Your career log will appear here.' }),
+          el('div', { text: t('profile.empty_history') }),
         ]),
       );
       return;
@@ -207,14 +227,14 @@ export const renderProfile = (app: App): void => {
           el('div', { class: 'row between' }, [
             el('div', { class: 'grow' }, [
               el('div', { style: 'font-size:13px;font-weight:800' }, [
-                el('span', { style: `color:${h.won ? 'var(--green)' : 'var(--red)'}`, text: h.won ? 'W' : 'L' }),
-                document.createTextNode(`  vs ${h.opponent}`),
+                el('span', { style: `color:${h.won ? 'var(--green)' : 'var(--red)'}`, text: h.won ? t('profile.w_short') : t('profile.l_short') }),
+                document.createTextNode(`  ${t('profile.vs')} ${h.opponent}`),
               ]),
-              el('div', { class: 'tiny', text: `${h.method} · ${h.scoreFor}–${h.scoreAgainst} · ${formatRelative(h.at)}` }),
+              el('div', { class: 'tiny', text: `${faMethod(h.method)} · ${faNum(h.scoreFor)}–${faNum(h.scoreAgainst)} · ${formatRelative(h.at)}` }),
             ]),
             el('div', { style: 'text-align:right;font-size:10.5px' }, [
-              el('div', { style: 'color:var(--blue);font-weight:700', text: `+${h.xp} XP` }),
-              el('div', { style: 'color:var(--gold);font-weight:700', text: `🪙${h.coins}` }),
+              el('div', { style: 'color:var(--blue);font-weight:700', text: `+${faNum(h.xp)} ${t('result.xp', { n: '' }).trim()}` }),
+              el('div', { style: 'color:var(--gold);font-weight:700', text: `🪙${faNum(h.coins)}` }),
             ]),
           ]),
         ]),
@@ -226,27 +246,43 @@ export const renderProfile = (app: App): void => {
   app.mount(screen);
 };
 
+const faMethod = (m: string): string => {
+  const k =
+    m === 'By pinfall' ? 'result.method.pin'
+    : m === 'By submission' ? 'result.method.submission'
+    : m === 'By stoppage' ? 'result.method.knockout'
+    : m === 'By forfeit' ? 'result.method.retired'
+    : m === 'On points' ? 'result.method.points'
+    : m === 'Drawn on points' ? 'result.method.draw_points'
+    : null;
+  return k ? t(k) : m;
+};
+
 const achievementCard = (
   a: (typeof ACHIEVEMENTS)[number],
   unlocked: boolean,
   at?: number,
-): HTMLElement =>
-  el('div', { class: `card ${unlocked ? '' : 'locked'}`, style: 'padding:11px' }, [
+): HTMLElement => {
+  const key = `ach.${a.id}`;
+  const name = t(`${key}.name`, {}, a.name);
+  const desc = t(`${key}.desc`, {}, a.description);
+  return el('div', { class: `card ${unlocked ? '' : 'locked'}`, style: 'padding:11px' }, [
     el('div', { class: 'row' }, [
       el('div', {
         style: `width:38px;height:38px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;font-size:19px;background:rgba(0,0,0,.32);border:1px solid ${unlocked ? 'rgba(251,191,36,.4)' : 'var(--line)'}`,
         text: unlocked ? a.icon : '🔒',
       }),
       el('div', { class: 'grow' }, [
-        el('div', { style: 'font-size:13px;font-weight:800', text: a.name }),
-        el('div', { class: 'tiny', text: a.description }),
+        el('div', { style: 'font-size:13px;font-weight:800', text: name }),
+        el('div', { class: 'tiny', text: desc }),
         unlocked && at ? el('div', { class: 'tiny', style: 'opacity:.6', text: formatRelative(at) }) : null,
       ]),
       el('div', { style: 'font-size:10.5px;font-weight:800;color:var(--gold);text-align:right' }, [
-        document.createTextNode(`🪙${a.coins}`),
+        document.createTextNode(`🪙${faNum(a.coins)}`),
       ]),
     ]),
   ]);
+};
 
 const statBox = (v: string, l: string): HTMLElement =>
   el('div', { class: 'stat-box' }, [el('div', { class: 'v', text: v }), el('div', { class: 'l', text: l })]);
@@ -260,6 +296,6 @@ const infoRow = (label: string, value: string): HTMLElement =>
 const formatDuration = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  if (h > 0) return t('dur.hm', { h: faNum(h), m: faNum(m) }, `${h}h ${m}m`);
+  return t('dur.m', { m: faNum(m) }, `${m}m`);
 };

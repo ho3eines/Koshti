@@ -254,9 +254,42 @@ export class GameRenderer {
     });
   }
 
+  /** Dust/sand kick-up on a mat slam. Pass a side or explicit (x,z). */
+  matDust(sideOrX: Side | number, zOrStrength?: number, strength = 1): void {
+    let x: number;
+    let z: number;
+    let s: number;
+    if (typeof sideOrX === 'string') {
+      const a = this.actors[sideOrX];
+      if (!a) return;
+      x = a.x;
+      z = a.z;
+      s = (zOrStrength as number | undefined) ?? 1;
+    } else {
+      x = sideOrX;
+      z = zOrStrength as number;
+      s = strength;
+    }
+    const count = Math.round(14 * s);
+    this.particles.burst(x, 0.08, z, count, {
+      speed: 2.8 * s,
+      color: 0xd9b48a,
+      life: 0.9,
+      size: 1.3,
+      up: 0.35,
+    });
+    this.particles.burst(x, 0.08, z, Math.round(6 * s), {
+      speed: 4.2 * s,
+      color: 0xfff3c4,
+      life: 0.5,
+      size: 0.7,
+      up: 0.6,
+    });
+  }
+
   celebrate(): void {
-    this.particles.confetti(120);
-    this.screen.impactFlash(0.4, 0xffe9a8);
+    this.particles.confetti(140);
+    this.screen.impactFlash(0.5, 0xffe9a8);
   }
 
   slowmo(duration = 1.2, scale = 0.35): void {
