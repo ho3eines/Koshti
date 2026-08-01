@@ -47,8 +47,17 @@ fastest way to get the game onto a device.
 The APK is **built by CI, not committed to the repo** — binaries don't belong
 in Git, and the build needs the Android SDK.
 
-1. **Download it:** GitHub → **Actions** → *Build Android APK* → newest green
-   run → **Artifacts** → `koshti-apk`.
+1. **Enable CI once** (the automation account can't write to
+   `.github/workflows/`, so the workflow ships in `ci/`):
+
+   ```bash
+   mkdir -p .github/workflows
+   git mv ci/build-apk.yml .github/workflows/build-apk.yml
+   git commit -m "ci: enable Android APK build" && git push
+   ```
+
+   Then: **Actions** → *Build Android APK* → newest green run → **Artifacts**
+   → `koshti-apk`. See [`ci/README.md`](ci/README.md).
 2. **Or build it locally:**
 
 ```bash
@@ -259,9 +268,11 @@ Worth recording, because they were all real:
 ## Known limitations
 
 - **No APK in the repo.** The build sandbox has no JDK, Android SDK, Gradle or
-  Maven access (all firewalled), and the CI token lacks `workflows` permission,
-  so the committed workflow must be enabled by a repo admin before it will run.
-  Use `npm run android:apk` locally, or the Actions artifact once CI runs.
+  Maven access — all firewalled — so an APK genuinely cannot be produced here.
+  The workflow that builds one is committed at `ci/build-apk.yml` and needs a
+  single `git mv` into `.github/workflows/` to activate (the automation account
+  lacks GitHub's `workflows` permission). Until then, use
+  `npm run android:apk` locally, or install the PWA from `public/app`.
 - **No GPU in CI.** Browser binaries couldn't be downloaded, so the rendered
   pixels have not been visually verified on a device. Everything CPU-side is
   tested for real, and `tests/bundle.test.ts` boots the actual shipped bundle
