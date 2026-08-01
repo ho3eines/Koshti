@@ -1,0 +1,45 @@
+{
+  "name": "koshti",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Koshti \u2014 AAA-quality 3D wrestling career game for Android",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "NODE_OPTIONS=--experimental-vm-modules vitest run",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules vitest",
+    "typecheck": "tsc --noEmit",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
+    "android:run": "npm run android:sync && cap run android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease",
+    "build:public": "npm run build && node scripts/make-public.mjs",
+    "serve:public": "npx --yes http-server public -p 8080 -c-1",
+    "apk": "bash scripts/build-apk.sh",
+    "apk:toolchain": "bash scripts/fetch-toolchain.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ho3eines/Koshti.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@types/jsdom": "^28.0.3",
+    "@types/three": "^0.185.3",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}

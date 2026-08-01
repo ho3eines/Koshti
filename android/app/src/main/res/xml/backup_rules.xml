@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cloud sync: Capacitor Preferences writes to SharedPreferences, so including
+  it here gives players free Google Drive backup of their career. Restoring on
+  a new device brings the whole save (profile, league, skills) with it.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="." />
+    <exclude domain="sharedpref" path="WebViewChromiumPrefs.xml" />
+    <exclude domain="database" path="." />
+</full-backup-content>

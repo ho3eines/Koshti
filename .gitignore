@@ -1,0 +1,28 @@
+node_modules/
+dist/
+.vite/
+coverage/
+*.log
+.DS_Store
+
+# Capacitor / Android build output
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/release/
+android/app/src/main/assets/public/
+android/capacitor-cordova-android-plugins/
+*.aab
+*.keystore
+!debug.keystore
+
+# Generated brand source art (large; regenerate as needed)
+assets/brand/*-source.png
+
+# public/ is assembled by `npm run build:public`; the landing page and the
+# built APK are tracked deliverables, the regenerable web build is not.
+public/app/
+
+# APK build scratch dir
+.apk-build/
