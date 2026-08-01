@@ -1,5 +1,10 @@
 # KOSHTI — Rise of a Champion
 
+> **🤖 AI agents / new contributors:** read
+> **[`AGENT_BRIEFING.md`](AGENT_BRIEFING.md)** first. It explains the current
+> state, the architecture, and the environment traps in this sandbox (firewall,
+> wiped `node_modules`, rewound git history) in about three minutes.
+
 A 3D wrestling career game built for Android. Real-time WebGL2 combat, a full
 career ladder from amateur mats to a world title, procedural audio, and a save
 system that never loses your progress.
