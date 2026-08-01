@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -9,7 +9,13 @@
     <meta name="theme-color" content="#08090d" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>KOSHTI — Rise of a Champion</title>
+    <title>کُشتی — ظهور یک قهرمان</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&family=Shahab&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/src/ui/styles.css" />
   </head>
   <body>
@@ -17,10 +23,16 @@
       <canvas id="stage"></canvas>
       <div id="ui-root"></div>
       <div id="boot-screen">
-        <div class="boot-mark">KOSHTI</div>
-        <div class="boot-sub">RISE OF A CHAMPION</div>
+        <div class="boot-particles">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="boot-ring"></div>
+        <div class="boot-mark">کُشتی</div>
+        <div class="boot-sub">ظهور یک قهرمان</div>
+        <div class="boot-tagline">از خاکِ تشک تا قهرمانی جهان</div>
         <div class="boot-bar"><i id="boot-fill"></i></div>
-        <div class="boot-status" id="boot-status">Initialising engine…</div>
+        <div class="boot-status" id="boot-status">در حال راه‌اندازی موتور…</div>
+        <div class="boot-version">نسخه ۱.۰</div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

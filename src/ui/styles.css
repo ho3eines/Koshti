@@ -34,8 +34,43 @@
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
 
-  --font: 'Inter', 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-display: 'Impact', 'Arial Black', 'Haettenschweiler', var(--font);
+  --font: 'Vazirmatn', 'Inter', 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-display: 'Vazirmatn', 'Impact', 'Arial Black', Haettenschweiler, var(--font);
+  --font-weight-display: 900;
+}
+
+html.lang-fa {
+  --font: 'Vazirmatn', system-ui, sans-serif;
+  --font-display: 'Vazirmatn', system-ui, sans-serif;
+  letter-spacing: 0 !important;
+}
+
+html.lang-fa .topbar h1,
+html.lang-fa .onboard-logo,
+html.lang-fa .boot-mark,
+html.lang-fa .result-verdict,
+html.lang-fa .cine-title {
+  letter-spacing: 0;
+}
+
+html[dir="rtl"] .fighter-hud.right {
+  text-align: left;
+}
+html[dir="rtl"] .hud-bar.right > i {
+  right: auto;
+  left: 0;
+}
+html[dir="rtl"] .icon-btn,
+html[dir="rtl"] .card .row > span:last-child {
+  transform: scaleX(-1);
+}
+html[dir="rtl"] .icon-btn {
+  transform: scaleX(1);
+}
+html[dir="rtl"] .row > .badge,
+html[dir="rtl"] .row > .style-pill,
+html[dir="rtl"] .topbar .icon-btn {
+  transform: none;
 }
 
 * {
@@ -98,8 +133,27 @@ body {
   align-items: center;
   justify-content: center;
   gap: 14px;
-  background: radial-gradient(ellipse at center, #12161f 0%, #05070b 70%);
-  transition: opacity 0.6s ease;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 42%, rgba(255, 140, 40, 0.14) 0%, transparent 60%),
+    radial-gradient(ellipse at center, #12161f 0%, #05070b 70%);
+  transition: opacity 0.8s cubic-bezier(0.7, 0, 0.84, 0);
+  overflow: hidden;
+}
+
+#boot-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 80px,
+      rgba(255, 255, 255, 0.02) 80px,
+      rgba(255, 255, 255, 0.02) 81px
+    );
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 #boot-screen.hidden {
@@ -107,31 +161,120 @@ body {
   pointer-events: none;
 }
 
+.boot-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.boot-particles i {
+  position: absolute;
+  display: block;
+  width: 3px;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: 0 0 8px var(--accent-2);
+  animation: boot-spark 3.4s linear infinite;
+}
+.boot-particles i:nth-child(1) { left: 10%; top: 80%; animation-delay: 0s; }
+.boot-particles i:nth-child(2) { left: 25%; top: 90%; animation-delay: 0.4s; background: var(--accent); }
+.boot-particles i:nth-child(3) { left: 40%; top: 85%; animation-delay: 0.9s; }
+.boot-particles i:nth-child(4) { left: 55%; top: 92%; animation-delay: 1.3s; background: var(--gold); }
+.boot-particles i:nth-child(5) { left: 70%; top: 82%; animation-delay: 1.7s; }
+.boot-particles i:nth-child(6) { left: 85%; top: 88%; animation-delay: 2.1s; background: var(--accent); }
+.boot-particles i:nth-child(7) { left: 15%; top: 88%; animation-delay: 2.5s; }
+.boot-particles i:nth-child(8) { left: 35%; top: 92%; animation-delay: 0.2s; background: var(--gold); }
+.boot-particles i:nth-child(9) { left: 50%; top: 80%; animation-delay: 0.7s; }
+.boot-particles i:nth-child(10) { left: 65%; top: 88%; animation-delay: 1.1s; background: var(--accent); }
+.boot-particles i:nth-child(11) { left: 80%; top: 82%; animation-delay: 1.5s; }
+.boot-particles i:nth-child(12) { left: 92%; top: 90%; animation-delay: 1.9s; background: var(--gold); }
+
+@keyframes boot-spark {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-120vh) scale(0.3); opacity: 0; }
+}
+
+.boot-ring {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent);
+  border-right-color: var(--accent-2);
+  opacity: 0.45;
+  animation: boot-spin 2.6s linear infinite;
+  box-shadow: 0 0 40px rgba(255, 93, 46, 0.15) inset;
+}
+.boot-ring::before,
+.boot-ring::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+.boot-ring::before {
+  inset: -24px;
+  animation: boot-spin 6s linear infinite reverse;
+}
+.boot-ring::after {
+  inset: -48px;
+  animation: boot-spin 10s linear infinite;
+  border-color: rgba(255, 191, 36, 0.12);
+}
+@keyframes boot-spin {
+  to { transform: rotate(360deg); }
+}
+
 .boot-mark {
   font-family: var(--font-display);
-  font-size: clamp(48px, 16vw, 96px);
-  letter-spacing: 6px;
+  font-size: clamp(58px, 18vw, 118px);
+  font-weight: 900;
+  letter-spacing: 4px;
   background: linear-gradient(180deg, #fff 0%, var(--accent-2) 55%, var(--accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 6px 22px rgba(255, 93, 46, 0.4));
+  filter: drop-shadow(0 8px 30px rgba(255, 93, 46, 0.45));
+  z-index: 2;
+  animation: boot-mark-in 1s cubic-bezier(0.2, 0.9, 0.25, 1.2);
+}
+@keyframes boot-mark-in {
+  from { transform: translateY(20px) scale(0.7); opacity: 0; filter: blur(12px); }
+  to { transform: none; opacity: 1; filter: blur(0); }
 }
 
 .boot-sub {
+  font-size: 13px;
+  letter-spacing: 6px;
+  color: var(--text-dim);
+  font-weight: 800;
+  z-index: 2;
+  animation: boot-fade 1.2s 0.3s backwards;
+}
+.boot-tagline {
   font-size: 12px;
-  letter-spacing: 5px;
   color: var(--text-faint);
-  text-transform: uppercase;
+  font-style: italic;
+  z-index: 2;
+  animation: boot-fade 1.2s 0.5s backwards;
+}
+@keyframes boot-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 
 .boot-bar {
-  width: min(240px, 62vw);
+  width: min(260px, 66vw);
   height: 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
-  margin-top: 18px;
+  margin-top: 20px;
+  z-index: 2;
 }
 
 .boot-bar i {
@@ -139,14 +282,31 @@ body {
   height: 100%;
   width: 0%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--gold));
+  background-size: 200% 100%;
+  animation: bar-shimmer 1.8s linear infinite;
   transition: width 0.35s ease;
+}
+@keyframes bar-shimmer {
+  to { background-position: -200% 0; }
 }
 
 .boot-status {
   font-size: 11px;
   color: var(--text-faint);
   letter-spacing: 1px;
+  z-index: 2;
+  min-height: 14px;
+}
+
+.boot-version {
+  position: absolute;
+  bottom: calc(var(--safe-b) + 14px);
+  font-size: 10px;
+  color: var(--text-faint);
+  letter-spacing: 2px;
+  opacity: 0.5;
+  z-index: 2;
 }
 
 /* --------------------------------------------------------------- screens */

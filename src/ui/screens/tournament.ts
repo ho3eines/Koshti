@@ -1,14 +1,15 @@
 import { audio } from '../../engine/audio';
+import { t, faNum } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { CLUB_BY_ID, DIVISION_BY_ID, FORMAT_META } from '../../game/data/leagues';
-import { createTournament, roundName, tournamentOpponent } from '../../game/career/league';
+import { createTournament, tournamentOpponent } from '../../game/career/league';
 import { generateDivisionRoster, toFighterConfig, type RosterWrestler } from '../../game/career/roster';
 import { TRAINING_STAGES } from '../../game/career/training';
 import type { MatchConfig } from '../../game/sim/types';
 import { el } from '../dom';
 import { toast } from '../toast';
 import { buildPlayerConfig } from './league';
-import { runMatch } from './results';
+import { runMatch, faRoundName } from './results';
 
 export const renderTournament = (app: App): void => {
   const save = app.requireSave();
@@ -19,13 +20,13 @@ export const renderTournament = (app: App): void => {
   screen.appendChild(
     el('div', { class: 'topbar' }, [
       el('button', { class: 'icon-btn', onclick: () => { audio.play('ui_back'); app.go('hub'); } }, [
-        document.createTextNode('‹'),
+        document.createTextNode('›'),
       ]),
       el('h1', {}, [
-        document.createTextNode('TOURNAMENTS'),
-        el('span', { class: 'sub', text: div.name }),
+        document.createTextNode(t('tournament.title')),
+        el('span', { class: 'sub', text: div.name_fa ?? div.name }),
       ]),
-      el('span', { class: 'chip gold', text: `🪙 ${save.profile.coins.toLocaleString()}` }),
+      el('span', { class: 'chip gold', text: `🪙 ${faNum(save.profile.coins)}` }),
     ]),
   );
 
@@ -35,7 +36,7 @@ export const renderTournament = (app: App): void => {
     body.appendChild(
       el('div', { class: 'empty-state' }, [
         el('div', { class: 'icon', text: '🔒' }),
-        el('div', { text: 'Finish your training programme to enter tournaments.' }),
+        el('div', { text: t('tournament.training_first') }),
       ]),
     );
     screen.appendChild(body);
@@ -53,7 +54,7 @@ export const renderTournament = (app: App): void => {
     const nextOpp = nextOppId && nextOppId !== 'player' ? byId.get(nextOppId) : null;
     const remaining = active.bracket[active.roundIndex]?.length ?? 0;
 
-    body.appendChild(el('div', { class: 'section-label', text: 'In progress' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('tournament.in_progress') }));
     body.appendChild(
       el('div', { class: 'card', style: 'border-color:var(--purple)' }, [
         el('div', { class: 'card-accent', style: 'background:var(--purple)' }),
@@ -61,18 +62,18 @@ export const renderTournament = (app: App): void => {
         el('p', {
           class: 'card-sub',
           text: active.eliminated
-            ? 'You have been eliminated from this bracket.'
-            : `${roundName(remaining)} · Prize pool 🪙${active.prize.toLocaleString()}`,
+            ? t('tournament.eliminated')
+            : t('tournament.prize_pool', { r: faRoundName(remaining), p: faNum(active.prize) }),
         }),
       ]),
     );
 
     if (!active.eliminated && nextOpp) {
-      body.appendChild(el('div', { class: 'section-label', text: 'Your next bout' }));
+      body.appendChild(el('div', { class: 'section-label', text: t('tournament.next_bout') }));
       body.appendChild(
         opponentPreview(nextOpp, () => {
           audio.play('ui_confirm');
-          startTournamentMatch(app, nextOpp, roundName(remaining));
+          startTournamentMatch(app, nextOpp, faRoundName(remaining));
         }),
       );
     } else if (active.eliminated) {
@@ -84,21 +85,21 @@ export const renderTournament = (app: App): void => {
             onclick: () => {
               audio.play('ui_tap');
               save.tournament = null;
-              void app.commit('Tournament closed');
+              void app.commit(t('tournament.tclosed'));
               app.go('tournament');
             },
           },
-          [document.createTextNode('Close Bracket')],
+          [document.createTextNode(t('tournament.close_bracket'))],
         ),
       );
     }
 
     // Bracket visualisation.
-    body.appendChild(el('div', { class: 'section-label', text: 'Bracket' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('tournament.bracket') }));
     const bracket = el('div', { class: 'bracket' });
     active.bracket.forEach((round, ri) => {
       const col = el('div', { class: 'bracket-round' }, [
-        el('h5', { text: roundName(round.length) }),
+        el('h5', { text: faRoundName(round.length) }),
       ]);
       for (const id of round) {
         const isPlayer = id === 'player';
@@ -118,22 +119,23 @@ export const renderTournament = (app: App): void => {
     body.appendChild(bracket);
   } else {
     // ------------------------------------------------------- enter events
-    body.appendChild(el('div', { class: 'section-label', text: 'Open events' }));
+    body.appendChild(el('div', { class: 'section-label', text: t('tournament.open_events') }));
 
+    const divName = div.name_fa ?? div.name;
     const events = [
       {
-        name: `${div.name} Open`,
+        name: t('tournament.div_open', { div: divName }),
         size: 8 as const,
         fee: Math.round(div.entryFee * 1.5),
-        desc: '8-wrestler single elimination. Three rounds to the trophy.',
+        desc: t('tournament.div_open_desc'),
         color: 'var(--purple)',
         icon: '🗓️',
       },
       {
-        name: `${div.name} Fast Four`,
+        name: t('tournament.fast_four', { div: divName }),
         size: 4 as const,
         fee: Math.round(div.entryFee * 0.8),
-        desc: 'Quick 4-wrestler bracket. Semi-final then final.',
+        desc: t('tournament.fast_four_desc'),
         color: 'var(--blue)',
         icon: '⚡',
       },
@@ -155,8 +157,8 @@ export const renderTournament = (app: App): void => {
           ]),
         ]),
         el('div', { class: 'row between', style: 'margin-top:9px' }, [
-          el('span', { class: 'tiny', style: canAfford ? '' : 'color:var(--red)', text: `Entry 🪙${ev.fee}` }),
-          el('span', { style: 'font-size:12px;font-weight:800;color:var(--gold)', text: `Prize 🪙${prize.toLocaleString()}` }),
+          el('span', { class: 'tiny', style: canAfford ? '' : 'color:var(--red)', text: t('tournament.entry', { n: faNum(ev.fee) }) }),
+          el('span', { style: 'font-size:12px;font-weight:800;color:var(--gold)', text: t('tournament.prize', { n: faNum(prize) }) }),
         ]),
       ]);
       if (canAfford) {
@@ -165,7 +167,7 @@ export const renderTournament = (app: App): void => {
           save.profile.coins -= ev.fee;
           save.tournament = createTournament(save, ev.name, ev.size);
           void app.commit(`Entered ${ev.name}`);
-          toast.show(`Entered ${ev.name}`, 'blue', 2600, '🗓️');
+          toast.show(t('tournament.entered', { n: ev.name }), 'blue', 2600, '🗓️');
           app.go('tournament');
         });
       }
@@ -179,8 +181,9 @@ export const renderTournament = (app: App): void => {
       const canAfford = save.profile.coins >= fee;
       const eligible = save.league.winsInDivision >= 2;
       const prize = Math.round(div.purse * 9);
+      const clubName = club.name_fa ?? club.name;
 
-      body.appendChild(el('div', { class: 'section-label', text: 'Club championship' }));
+      body.appendChild(el('div', { class: 'section-label', text: t('tournament.club_title') }));
       const card = el('div', { class: `card ${canAfford && eligible ? 'interactive' : 'locked'}` }, [
         el('div', { class: 'card-accent', style: `background:${club.colors[0]}` }),
         el('div', { class: 'row' }, [
@@ -189,25 +192,25 @@ export const renderTournament = (app: App): void => {
             text: '🛡️',
           }),
           el('div', { class: 'grow' }, [
-            el('div', { class: 'card-title', text: `${club.name} Championship` }),
+            el('div', { class: 'card-title', text: t('tournament.club_champ', { club: clubName }) }),
             el('p', {
               class: 'card-sub',
               text: eligible
-                ? `Represent ${club.city}. Eight of the division's best. Winner takes the club title.`
-                : 'Win at least 2 league matches in this division to qualify.',
+                ? t('tournament.club_eligible', { city: club.city_fa ?? club.city })
+                : t('tournament.club_need_wins'),
             }),
           ]),
         ]),
         el('div', { class: 'row between', style: 'margin-top:9px' }, [
-          el('span', { class: 'tiny', style: canAfford ? '' : 'color:var(--red)', text: `Entry 🪙${fee}` }),
-          el('span', { style: 'font-size:12px;font-weight:800;color:var(--gold)', text: `Prize 🪙${prize.toLocaleString()}` }),
+          el('span', { class: 'tiny', style: canAfford ? '' : 'color:var(--red)', text: t('tournament.entry', { n: faNum(fee) }) }),
+          el('span', { style: 'font-size:12px;font-weight:800;color:var(--gold)', text: t('tournament.prize', { n: faNum(prize) }) }),
         ]),
       ]);
       if (canAfford && eligible) {
         card.addEventListener('click', () => {
           audio.play('ui_confirm');
           save.profile.coins -= fee;
-          save.tournament = createTournament(save, `${club.name} Club Championship`, 8);
+          save.tournament = createTournament(save, t('tournament.club_champ', { club: clubName }), 8);
           save.tournament.prize = prize;
           void app.commit('Entered club championship');
           app.go('tournament');
@@ -218,13 +221,22 @@ export const renderTournament = (app: App): void => {
 
     // Past titles.
     if (save.league.titlesHeld.length > 0) {
-      body.appendChild(el('div', { class: 'section-label', text: 'Titles won' }));
+      body.appendChild(el('div', { class: 'section-label', text: t('tournament.titles_won') }));
       const titles = el('div', { class: 'card' });
-      for (const t of save.league.titlesHeld) {
+      for (const ti of save.league.titlesHeld) {
+        const isClub = ti.startsWith('club');
+        const isWorld = ti.startsWith('world');
         titles.appendChild(
           el('div', { class: 'row', style: 'gap:8px;padding:5px 0' }, [
-            el('span', { text: t.startsWith('club') ? '🛡️' : t.startsWith('world') ? '👑' : '🏆' }),
-            el('span', { style: 'font-size:12.5px;font-weight:700', text: prettyTitle(t) }),
+            el('span', { text: isClub ? '🛡️' : isWorld ? '👑' : '🏆' }),
+            el('span', {
+              style: 'font-size:12.5px;font-weight:700',
+              text: isWorld
+                ? t('tournament.world_champ')
+                : isClub
+                  ? t('profile.club_champ')
+                  : t('tournament.tourney_champ'),
+            }),
           ]),
         );
       }
@@ -234,12 +246,6 @@ export const renderTournament = (app: App): void => {
 
   screen.appendChild(body);
   app.mount(screen);
-};
-
-const prettyTitle = (t: string): string => {
-  if (t.startsWith('world:')) return 'World Champion';
-  if (t.startsWith('club:')) return 'Club Championship';
-  return 'Tournament Champion';
 };
 
 const opponentPreview = (w: RosterWrestler, onClick: () => void): HTMLElement => {
@@ -254,14 +260,17 @@ const opponentPreview = (w: RosterWrestler, onClick: () => void): HTMLElement =>
       }),
       el('div', { class: 'vs-info' }, [
         el('h4', { text: w.name }),
-        el('div', { class: 'meta', text: `"${w.nickname}" · ${club?.name ?? 'Independent'}` }),
+        el('div', {
+          class: 'meta',
+          text: `«${w.nickname_fa ?? w.nickname}» · ${club?.name_fa ?? club?.name ?? t('profile.independent')}`,
+        }),
       ]),
       el('div', { class: 'vs-rating' }, [
-        el('div', { class: 'num', text: String(w.rating) }),
-        el('div', { class: 'lbl', text: 'OVR' }),
+        el('div', { class: 'num', text: faNum(w.rating) }),
+        el('div', { class: 'lbl', text: t('profile.overall') }),
       ]),
     ]),
-    el('button', { class: 'btn', style: 'margin-top:11px' }, [document.createTextNode('Fight')]),
+    el('button', { class: 'btn', style: 'margin-top:11px' }, [document.createTextNode(t('tournament.fight'))]),
   ]);
   card.addEventListener('click', onClick);
   return card;
@@ -270,7 +279,7 @@ const opponentPreview = (w: RosterWrestler, onClick: () => void): HTMLElement =>
 const startTournamentMatch = (app: App, opponent: RosterWrestler, round: string): void => {
   const save = app.requireSave();
   const div = DIVISION_BY_ID.get(save.league.division)!;
-  const isClub = save.tournament?.name.toLowerCase().includes('club') ?? false;
+  const isClub = save.tournament?.name.toLowerCase().includes('باشگاه') ?? save.tournament?.name.toLowerCase().includes('club') ?? false;
   const format = isClub ? 'club_championship' : 'tournament';
   const meta = FORMAT_META[format];
 
@@ -283,8 +292,8 @@ const startTournamentMatch = (app: App, opponent: RosterWrestler, round: string)
     player: buildPlayerConfig(app),
     opponent: toFighterConfig(opponent, Math.min(1, div.difficulty + 0.06)),
     difficulty: Math.min(1, div.difficulty + 0.06),
-    title: round.toUpperCase(),
-    subtitle: save.tournament?.name ?? 'TOURNAMENT',
+    title: round,
+    subtitle: save.tournament?.name ?? t('tournament.title'),
   };
 
   runMatch(app, {

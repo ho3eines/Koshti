@@ -69,7 +69,7 @@ export class MatchController {
     this.renderer.setCameraMode('broadcast');
     audio.play('bell', { volume: 1 });
     audio.crowdPop(0.7);
-    this.say(`Here we go! ${this.names.player} versus ${this.names.opponent}!`, true);
+    this.say(`یک دو سه… زنگ! ${this.names.player} در برابر ${this.names.opponent} — شروع!`, true);
   }
 
   // ----------------------------------------------------------------- input
@@ -192,7 +192,8 @@ export class MatchController {
       if (this.introTimer <= 0) this.beginMatch();
     }
 
-    // Movement from the virtual stick.
+    // Movement from the virtual stick (and keyboard on desktop).
+    this.input.pollKeyboard();
     if (this.input.stick.active && !this.sim.paused && !this.sim.finished) {
       this.sim.command({ c: 'walk', dx: this.input.stick.x, dz: this.input.stick.y });
       this.footstepTimer -= dtRaw;
@@ -259,7 +260,11 @@ export class MatchController {
         );
         this.renderer.showDamage(e.side === 'player' ? 'opponent' : 'player', e.damage, e.critical);
 
-        if (m.category === 'throw' || m.category === 'finisher') audio.play('slam', { volume: 1 });
+        if (m.category === 'throw' || m.category === 'finisher' || m.category === 'takedown') {
+          audio.play('slam', { volume: 1 });
+          const victimSide: Side = e.side === 'player' ? 'opponent' : 'player';
+          this.renderer.matDust(victimSide, m.category === 'finisher' ? 1.6 : 1.1);
+        }
         else if (m.impact > 0.6) audio.play('hit_heavy', { volume: 0.9 });
         else if (m.impact > 0.3) audio.play('hit_medium', { volume: 0.8 });
         else audio.play('hit_light', { volume: 0.7 });
@@ -267,9 +272,13 @@ export class MatchController {
         audio.crowdPop(clamp01(m.impact * 0.55 + (e.critical ? 0.3 : 0)));
         if (e.side === 'player') this.input.haptic(Math.round(10 + m.impact * 26));
 
-        if (e.combo >= 3) this.say(`${e.combo} move chain from ${this.names[e.side]}!`);
-        else if (m.category === 'throw') this.say(`What a ${m.name.toLowerCase()}!`);
-        else if (e.critical) this.say('Oh, that one hurt!');
+        const faMove = this.faMove(m.id);
+        if (e.combo >= 3) this.say(`${this.names[e.side]} زنجیرهٔ ${e.combo} ضربه‌ای را ادامه می‌دهد!`, e.combo >= 5);
+        else if (m.category === 'finisher') this.say(`تمام‌کننده! ${faMove}!`, true);
+        else if (m.category === 'throw') this.say(`چه ${faMove}ی کوبنده‌ای!`);
+        else if (m.category === 'takedown') this.say(`خاک شد! ${faMove}ی تمیز!`);
+        else if (m.category === 'submission') this.say(`قفل شد! ${faMove} دردسرساز شده!`);
+        else if (e.critical) this.say('ای والا! چه ضربهٔ سنگینی!');
         break;
       }
 
@@ -293,8 +302,8 @@ export class MatchController {
         }
         this.say(
           e.perfect
-            ? `Perfect counter by ${this.names[e.side]}! Textbook!`
-            : `Reversed! ${this.names[e.side]} turns it around!`,
+            ? `ضدِ عالی از ${this.names[e.side]}! چه اجرای کاملی!`
+            : `برگشت! ${this.names[e.side]} ورق را برمی‌گرداند!`,
           true,
         );
         break;
@@ -307,7 +316,9 @@ export class MatchController {
       case 'knockdown':
         audio.play('slam', { volume: 0.85 });
         this.renderer.setCameraMode('ground', 1.8);
+        this.renderer.matDust(e.side === 'player' ? 'opponent' : 'player', 1.3);
         audio.crowdPop(0.75);
+        this.say('و خاک شد! ضربهٔ سنگینی بود!');
         break;
 
       case 'stance_change':
@@ -317,21 +328,24 @@ export class MatchController {
       case 'score':
         if (e.points >= 4) {
           audio.crowdPop(0.8);
-          this.say(`${e.points} points! ${e.reason}!`);
+          this.say(`${e.points} امتیاز! ${this.faScoreReason(e.reason)}!`);
         }
         break;
 
       case 'submission_attempt':
         if (e.progress > 0.5 && e.progress < 0.56) {
           audio.play('submission', { volume: 0.7 });
-          this.say(`This could be it! Is ${this.names[e.side === 'player' ? 'opponent' : 'player']} going to tap?`, true);
+          this.say(
+            `می‌تونه تموم بشه! ${this.names[e.side === 'player' ? 'opponent' : 'player']} تسلیم می‌شه؟`,
+            true,
+          );
         }
         break;
 
       case 'pin_attempt':
         if (e.progress > 0.35 && e.progress < 0.42) {
           audio.crowdPop(0.85);
-          this.say('Shoulders are down! One... two...!', true);
+          this.say('شانه‌ها روی تشک! یک… دو…!', true);
         }
         break;
 
@@ -339,19 +353,20 @@ export class MatchController {
       case 'submission_broken':
         audio.crowdPop(0.8);
         audio.play('breath', { volume: 0.7 });
-        this.say('Escaped! Incredible heart!', true);
+        this.say('فرار کرد! چه دل و جراتی!', true);
         break;
 
       case 'momentum_full':
         if (e.side === 'player') {
           audio.play('finisher_charge', { volume: 0.55 });
           this.input.haptic([20, 40, 20, 40]);
+          this.say('مومنتوم کاملاً پر شد! تمام‌کننده آماده است!');
         }
         break;
 
       case 'exhausted':
         audio.play('breath', { volume: 0.8 });
-        this.say(`${this.names[e.side]} is running on empty out there.`);
+        this.say(`${this.names[e.side]} نفس کم آورده و روی زانو افتاده.`);
         break;
 
       case 'round_end':
@@ -362,7 +377,7 @@ export class MatchController {
       case 'round_start':
         if (e.round > 1) {
           audio.play('bell', { volume: 0.9 });
-          this.say(`Round ${e.round}. Let's go!`, true);
+          this.say(`راند ${e.round}. بزن بریم!`, true);
         }
         break;
 
@@ -376,6 +391,10 @@ export class MatchController {
     }
 
     this.cbs.onEvent?.(e);
+  }
+
+  private faScoreReason(_reason: string): string {
+    return 'امتیاز زیبا';
   }
 
   private finish(result: MatchResult): void {
@@ -395,14 +414,14 @@ export class MatchController {
       audio.playMusic('victory');
       this.input.haptic([40, 60, 40, 60, 80]);
       this.say(
-        `${this.names.player} wins it! What a performance here tonight!`,
+        `${this.names.player} برنده شد! چه اجرای باشکوهی امشب!`,
         true,
       );
     } else {
       this.renderer.playClip('opponent', 'celebrate');
       this.renderer.playClip('player', 'down');
       audio.play('defeat', { volume: 0.9 });
-      this.say(`${this.names.opponent} takes it. Back to the gym.`, true);
+      this.say(`${this.names.opponent} می‌برد. برگرد به سالن تمرین.`, true);
     }
 
     this.input.disable();
@@ -415,6 +434,30 @@ export class MatchController {
     this.lastCommentaryEvent = line;
     this.commentaryCooldown = priority ? 1.5 : 4;
     audio.say(line, priority);
+  }
+
+  /** Map move ids to spoken Persian for commentary. */
+  private faMove(id: string): string {
+    const MAP: Record<string, string> = {
+      jab_setup: 'ضربه',
+      body_lock_knee: 'زانو',
+      collar_elbow: 'کلگی',
+      underhook: 'زیربغل',
+      double_leg: 'دو پا',
+      single_leg: 'تک پا',
+      ankle_pick: 'قاپ مچ پا',
+      hip_toss: 'پرتاب هیپ',
+      suplex: 'سوپلکس',
+      headlock_throw: 'کِش سر',
+      arm_bar: 'بازو قفل',
+      half_nelson: 'نیم نلسون',
+      guillotine: 'گیوتین',
+      sig_thunder_slam: 'تندر کوب',
+      sig_lightning_roll: 'آذرخش',
+      fin_koshti_crusher: 'درهم‌شکن',
+      fin_iron_clutch: 'چنگ آهنین',
+    };
+    return MAP[id] ?? 'حرکت';
   }
 
   retire(): void {

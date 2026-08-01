@@ -1,4 +1,5 @@
 import { audio } from '../../engine/audio';
+import { t } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { STYLE_LIST, type FightingStyle } from '../../game/data/styles';
 import { CLUBS } from '../../game/data/leagues';
@@ -46,24 +47,24 @@ export const renderOnboarding = (app: App): void => {
       clear(body);
       const wrap = el('div', { class: 'onboard' });
 
-      wrap.appendChild(el('div', { class: 'onboard-logo', text: 'KOSHTI' }));
-      wrap.appendChild(el('div', { class: 'onboard-tag', text: 'Rise of a Champion' }));
+      wrap.appendChild(el('div', { class: 'onboard-logo', text: t('app.title') }));
+      wrap.appendChild(el('div', { class: 'onboard-tag', text: t('app.subtitle') }));
 
       if (meta.exists) {
         wrap.appendChild(
-          el('div', { class: 'card', style: 'text-align:left;margin-top:18px' }, [
-            el('div', { class: 'section-label', text: 'Continue career' }),
+          el('div', { class: 'card', style: 'text-align:start;margin-top:18px' }, [
+            el('div', { class: 'section-label', text: t('onboard.continue') }),
             el('div', { class: 'row between' }, [
               el('div', { class: 'grow' }, [
-                el('div', { class: 'card-title', text: meta.name ?? 'Wrestler' }),
+                el('div', { class: 'card-title', text: meta.name ?? t('onboard.begin') }),
                 el('p', {
                   class: 'card-sub',
-                  text: `Level ${meta.level ?? 1} · ${labelDivision(meta.division)} · saved ${formatRelative(meta.savedAt ?? Date.now())}`,
+                  text: `${t(`div.${meta.division ?? 'amateur'}`)} · سطح ${meta.level ?? 1} · ${formatRelative(meta.savedAt ?? Date.now())}`,
                 }),
               ]),
             ]),
             el('div', { class: 'tiny', style: 'margin-top:8px;opacity:.7' }, [
-              document.createTextNode(`Checkpoint: ${meta.label ?? 'Autosave'}`),
+              document.createTextNode(`${meta.label ?? 'Autosave'}`),
             ]),
           ]),
         );
@@ -78,7 +79,7 @@ export const renderOnboarding = (app: App): void => {
                 audio.play('ui_confirm');
                 const save = await app.saves.load();
                 if (!save) {
-                  toast.show('Save could not be read', 'red');
+                  toast.show(t('onboard.save_bad'), 'red');
                   return;
                 }
                 app.save = save;
@@ -87,12 +88,11 @@ export const renderOnboarding = (app: App): void => {
                 app.applyInputSettings();
                 app.applyGraphicsSettings();
                 audio.playMusic('menu');
-                // Resume exactly where they left off.
                 const resume = save.checkpoint.screen;
                 app.go(resume === 'match' || resume === 'results' ? 'hub' : resume);
               },
             },
-            [document.createTextNode('▶  Continue')],
+            [document.createTextNode(t('onboard.continue'))],
           ),
         );
 
@@ -107,7 +107,7 @@ export const renderOnboarding = (app: App): void => {
                 confirmNewCareer();
               },
             },
-            [document.createTextNode('New Career')],
+            [document.createTextNode(t('onboard.new'))],
           ),
         );
       } else {
@@ -115,7 +115,7 @@ export const renderOnboarding = (app: App): void => {
           el('p', {
             class: 'hint',
             style: 'margin-top:14px',
-            text: 'From an empty training hall to the world championship. Every takedown, every reversal, every title — earned.',
+            text: t('onboard.intro'),
           }),
         );
         wrap.appendChild(
@@ -132,7 +132,7 @@ export const renderOnboarding = (app: App): void => {
                 draw();
               },
             },
-            [document.createTextNode('Begin Your Career')],
+            [document.createTextNode(t('onboard.begin'))],
           ),
         );
       }
@@ -152,10 +152,8 @@ export const renderOnboarding = (app: App): void => {
   const confirmNewCareer = (): void => {
     const backdrop = el('div', { class: 'modal-backdrop' });
     const modal = el('div', { class: 'modal' }, [
-      el('h2', { text: 'Start Over?' }),
-      el('p', {
-        text: 'Starting a new career will permanently erase your current progress, titles and unlocks. This cannot be undone.',
-      }),
+      el('h2', { text: t('onboard.confirm_wipe_title') }),
+      el('p', { text: t('onboard.confirm_wipe_body') }),
       el('div', { class: 'btn-row' }, [
         el(
           'button',
@@ -166,7 +164,7 @@ export const renderOnboarding = (app: App): void => {
               backdrop.remove();
             },
           },
-          [document.createTextNode('Cancel')],
+          [document.createTextNode(t('onboard.cancel'))],
         ),
         el(
           'button',
@@ -180,7 +178,7 @@ export const renderOnboarding = (app: App): void => {
               draw();
             },
           },
-          [document.createTextNode('Erase & Start')],
+          [document.createTextNode(t('onboard.erase'))],
         ),
       ]),
     ]);
@@ -191,18 +189,15 @@ export const renderOnboarding = (app: App): void => {
   // ------------------------------------------------------------------ name
   const drawName = (): void => {
     const wrap = el('div', { class: 'onboard' });
-    wrap.appendChild(el('div', { class: 'onboard-logo', text: 'KOSHTI' }));
+    wrap.appendChild(el('div', { class: 'onboard-logo', text: t('app.title') }));
     wrap.appendChild(
-      el('p', {
-        class: 'hint',
-        text: 'Before you step on the mat — what should the arena announcer call you?',
-      }),
+      el('p', { class: 'hint', text: t('onboard.name_prompt') }),
     );
 
     const input = el('input', {
       class: 'name-input',
       type: 'text',
-      placeholder: 'Enter your name',
+      placeholder: t('onboard.name_placeholder'),
       maxlength: 20,
       autocomplete: 'off',
       autocapitalize: 'words',
@@ -210,14 +205,14 @@ export const renderOnboarding = (app: App): void => {
     }) as HTMLInputElement;
 
     const next = el('button', { class: 'btn', disabled: true }, [
-      document.createTextNode('Continue'),
+      document.createTextNode(t('onboard.next')),
     ]) as HTMLButtonElement;
 
     const validate = (): void => {
       name = input.value.trim();
       const ok = name.length >= 2 && name.length <= 20;
       next.disabled = !ok;
-      err.textContent = name.length > 0 && name.length < 2 ? 'At least 2 characters' : '';
+      err.textContent = name.length > 0 && name.length < 2 ? t('onboard.name_min') : '';
     };
 
     const err = el('div', { class: 'tiny', style: 'color:var(--red);min-height:16px' });
@@ -241,7 +236,7 @@ export const renderOnboarding = (app: App): void => {
       el('p', {
         class: 'hint',
         style: 'margin-top:4px',
-        text: 'Your profile, progress and titles are saved automatically under this name.',
+        text: t('onboard.name_hint'),
       }),
     );
 
@@ -253,18 +248,21 @@ export const renderOnboarding = (app: App): void => {
   const drawStyle = (): void => {
     const wrap = el('div', { class: 'onboard', style: 'justify-content:flex-start;padding-top:24px' });
     wrap.appendChild(
-      el('h1', { style: 'font-family:var(--font-display);font-size:26px;margin:0', text: `WELCOME, ${name.toUpperCase()}` }),
+      el('h1', {
+        style: 'font-family:var(--font-display);font-size:26px;margin:0',
+        text: t('onboard.welcome', { name: name.toUpperCase() }),
+      }),
     );
     wrap.appendChild(
-      el('p', { class: 'hint', text: 'Pick the style that suits you. It shapes your starting attributes — you can grow into anything later.' }),
+      el('p', { class: 'hint', text: t('onboard.style_blurb') }),
     );
 
     const grid = el('div', { class: 'style-grid', style: 'margin-top:6px' });
     const cards: HTMLElement[] = [];
     for (const s of STYLE_LIST) {
       const card = el('button', { class: 'style-card', style: `--sc:${s.color}` }, [
-        el('h4', { text: s.name }),
-        el('p', { text: s.blurb }),
+        el('h4', { text: t(`style.${s.id}`) }),
+        el('p', { text: t(`style.${s.id}.blurb`) }),
       ]);
       card.addEventListener('click', () => {
         audio.play('ui_tap');
@@ -279,7 +277,7 @@ export const renderOnboarding = (app: App): void => {
     wrap.appendChild(grid);
 
     const nextBtn = el('button', { class: 'btn', style: 'margin-top:14px', disabled: true }, [
-      document.createTextNode('Continue'),
+      document.createTextNode(t('onboard.next')),
     ]) as HTMLButtonElement;
     nextBtn.addEventListener('click', () => {
       audio.play('ui_confirm');
@@ -288,9 +286,10 @@ export const renderOnboarding = (app: App): void => {
     });
     wrap.appendChild(nextBtn);
     wrap.appendChild(
-      el('button', { class: 'btn ghost', onclick: () => { audio.play('ui_back'); step = 'name'; draw(); } }, [
-        document.createTextNode('Back'),
-      ]),
+      el('button', {
+        class: 'btn ghost',
+        onclick: () => { audio.play('ui_back'); step = 'name'; draw(); },
+      }, [document.createTextNode(t('onboard.back'))]),
     );
     body.appendChild(wrap);
   };
@@ -299,26 +298,29 @@ export const renderOnboarding = (app: App): void => {
   const drawClub = (): void => {
     const wrap = el('div', { class: 'onboard', style: 'justify-content:flex-start;padding-top:24px' });
     wrap.appendChild(
-      el('h1', { style: 'font-family:var(--font-display);font-size:24px;margin:0', text: 'CHOOSE A CLUB' }),
+      el('h1', {
+        style: 'font-family:var(--font-display);font-size:24px;margin:0',
+        text: t('onboard.choose_club'),
+      }),
     );
     wrap.appendChild(
-      el('p', { class: 'hint', text: 'Your club backs you in league play and unlocks club championships. You can transfer later.' }),
+      el('p', { class: 'hint', text: t('onboard.club_blurb') }),
     );
 
-    const list = el('div', { style: 'text-align:left;margin-top:6px' });
+    const list = el('div', { style: 'text-align:start;margin-top:6px' });
     const cards: HTMLElement[] = [];
     for (const c of CLUBS) {
       const card = el('div', { class: 'card interactive', style: `--sc:${c.colors[0]}` }, [
         el('div', { class: 'card-accent', style: `background:${c.colors[0]}` }),
         el('div', { class: 'row between' }, [
           el('div', { class: 'grow' }, [
-            el('div', { class: 'card-title', text: c.name }),
-            el('p', { class: 'card-sub', text: `${c.city} · "${c.motto}"` }),
+            el('div', { class: 'card-title', text: c.name_fa ?? c.name }),
+            el('p', { class: 'card-sub', text: `${c.city_fa ?? c.city} · «${c.motto_fa ?? c.motto}»` }),
           ]),
           el('div', {
             class: 'style-pill',
             style: `color:${c.colors[0]}`,
-            text: c.style,
+            text: t(`style.${c.style}`),
           }),
         ]),
       ]);
@@ -335,17 +337,16 @@ export const renderOnboarding = (app: App): void => {
     wrap.appendChild(list);
 
     const startBtn = el('button', { class: 'btn gold', disabled: true }, [
-      document.createTextNode('Start Career'),
+      document.createTextNode(t('onboard.start')),
     ]) as HTMLButtonElement;
 
     startBtn.addEventListener('click', async () => {
       audio.play('levelup');
       startBtn.disabled = true;
-      startBtn.textContent = 'Creating profile…';
+      startBtn.textContent = t('onboard.creating');
       const save = await app.createCareer(name);
       save.profile.style = style;
       save.profile.clubId = clubId;
-      // Style choice biases the starting build.
       const bias: Record<FightingStyle, Partial<Record<string, number>>> = {
         power: { strength: 6, defense: 3, speed: -2 },
         technical: { technique: 6, defense: 2, strength: -2 },
@@ -358,29 +359,19 @@ export const renderOnboarding = (app: App): void => {
       }
       save.checkpoint.label = 'Career created';
       await app.commit('Career created');
-      toast.show(`Welcome to Koshti, ${name}!`, 'gold', 3200, '🤼');
+      toast.show(t('match.welcome_toast', { name }), 'gold', 3200, '🤼');
       app.go('training', { firstTime: true });
     });
 
     wrap.appendChild(startBtn);
     wrap.appendChild(
-      el('button', { class: 'btn ghost', onclick: () => { audio.play('ui_back'); step = 'style'; draw(); } }, [
-        document.createTextNode('Back'),
-      ]),
+      el('button', {
+        class: 'btn ghost',
+        onclick: () => { audio.play('ui_back'); step = 'style'; draw(); },
+      }, [document.createTextNode(t('onboard.back'))]),
     );
     body.appendChild(wrap);
   };
 
   draw();
-};
-
-const labelDivision = (id?: string): string => {
-  const map: Record<string, string> = {
-    amateur: 'Amateur Circuit',
-    semipro: 'Semi-Pro League',
-    professional: 'Professional Division',
-    elite: 'Elite Series',
-    champion: "Champion's Circle",
-  };
-  return map[id ?? ''] ?? 'Amateur Circuit';
 };

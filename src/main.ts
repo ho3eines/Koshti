@@ -1,5 +1,6 @@
 import { App } from './game/app';
 import { audio } from './engine/audio';
+import { setLang, t } from './core/i18n';
 import { renderOnboarding } from './ui/screens/onboarding';
 import { renderHub } from './ui/screens/hub';
 import { renderTraining } from './ui/screens/training';
@@ -13,10 +14,17 @@ import { renderMatch } from './ui/screens/match';
 const bootScreen = document.getElementById('boot-screen');
 const bootFill = document.getElementById('boot-fill');
 const bootStatus = document.getElementById('boot-status');
+const bootMark = document.querySelector('.boot-mark') as HTMLElement | null;
+const bootSub = document.querySelector('.boot-sub') as HTMLElement | null;
 
-const setProgress = (pct: number, label: string): void => {
+// Default to Persian — the user explicitly asked for a fully Persian game.
+setLang('fa');
+if (bootMark) bootMark.textContent = t('app.title');
+if (bootSub) bootSub.textContent = t('app.subtitle');
+
+const setProgress = (pct: number, key: string, vars?: Record<string, string | number>): void => {
   if (bootFill) bootFill.style.width = `${Math.round(pct * 100)}%`;
-  if (bootStatus) bootStatus.textContent = label;
+  if (bootStatus) bootStatus.textContent = t(key, vars);
 };
 
 const main = async (): Promise<void> => {
@@ -42,7 +50,7 @@ const main = async (): Promise<void> => {
   } catch (err) {
     console.error('Boot failed', err);
     if (bootStatus) {
-      bootStatus.textContent = 'Failed to start. Your device may not support WebGL2.';
+      bootStatus.textContent = t('boot.fail');
       bootStatus.style.color = '#ff6b5b';
     }
     return;

@@ -1,4 +1,5 @@
 import { audio } from '../../engine/audio';
+import { t, faNum } from '../../core/i18n';
 import type { App } from '../../game/app';
 import { QUALITY } from '../../engine/quality';
 import type { ControlScheme, GraphicsPreset, ScreenId } from '../../game/save/schema';
@@ -14,40 +15,41 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
   screen.appendChild(
     el('div', { class: 'topbar' }, [
       el('button', { class: 'icon-btn', onclick: () => { audio.play('ui_back'); app.go(returnTo); } }, [
-        document.createTextNode('‹'),
+        document.createTextNode('›'),
       ]),
       el('h1', {}, [
-        document.createTextNode('SETTINGS'),
-        el('span', { class: 'sub', text: `${app.caps.isMobile ? 'Mobile' : 'Desktop'} · GPU tier ${app.caps.gpuTier}` }),
+        document.createTextNode(t('settings.title')),
+        el('span', {
+          class: 'sub',
+          text: `${app.caps.isMobile ? t('settings.mobile') : t('settings.desktop')} · GPU tier ${faNum(app.caps.gpuTier)}`,
+        }),
       ]),
     ]),
   );
 
   const body = el('div', { class: 'screen-body' });
-  const persist = (label: string): void => {
-    app.queueSave(label);
+  const persist = (_label: string): void => {
+    app.queueSave('Settings changed');
   };
 
   // ------------------------------------------------------------- graphics
-  body.appendChild(el('div', { class: 'section-label', text: 'Graphics' }));
+  body.appendChild(el('div', { class: 'section-label', text: t('settings.graphics') }));
   const gfxCard = el('div', { class: 'card' });
 
+  const presets: GraphicsPreset[] = ['low', 'medium', 'high', 'ultra'];
   gfxCard.appendChild(
     settingRow(
-      'Quality preset',
-      `Auto-detected: ${QUALITY[s.autoDetected].label}`,
+      t('settings.quality'),
+      t('settings.auto', { q: t(`settings.gfx_${s.autoDetected}`) }),
       segmented(
-        (['low', 'medium', 'high', 'ultra'] as GraphicsPreset[]).map((q) => ({
-          id: q,
-          label: QUALITY[q].label,
-        })),
+        presets.map((q) => ({ id: q, label: t(`settings.gfx_${q}`) })),
         s.graphics,
         (val) => {
           s.graphics = val as GraphicsPreset;
           s.manualGraphics = true;
           app.applyGraphicsSettings();
           audio.play('ui_tap');
-          toast.show(`Graphics: ${QUALITY[s.graphics].label}`, 'blue', 1600);
+          toast.show(`${t('settings.quality')}: ${t(`settings.gfx_${s.graphics}`)}`, 'blue', 1600);
           persist('Settings changed');
         },
       ),
@@ -56,12 +58,12 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
 
   gfxCard.appendChild(
     settingRow(
-      'Frame rate target',
-      'Lower target saves battery on long sessions.',
+      t('settings.fps'),
+      t('settings.dynres_desc'),
       segmented(
         [
-          { id: '30', label: '30 FPS' },
-          { id: '60', label: '60 FPS' },
+          { id: '30', label: '۳۰ FPS' },
+          { id: '60', label: '۶۰ FPS' },
         ],
         String(s.targetFps),
         (val) => {
@@ -75,82 +77,65 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
   );
 
   gfxCard.appendChild(
-    settingRow(
-      'Dynamic resolution',
-      'Automatically lowers render scale to hold your target frame rate.',
-      toggle(s.dynamicResolution, (v) => {
-        s.dynamicResolution = v;
-        app.applyGraphicsSettings();
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.dynres'), t('settings.dynres_desc'), toggle(s.dynamicResolution, (v) => {
+      s.dynamicResolution = v;
+      app.applyGraphicsSettings();
+      persist('Settings changed');
+    })),
   );
 
   gfxCard.appendChild(
-    settingRow(
-      'Camera shake',
-      'Impact shake intensity.',
-      slider(s.cameraShake, 0, 1.5, 0.1, (v) => {
-        s.cameraShake = v;
-        app.renderer.setCameraShake(v);
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.shake'), t('settings.shake_desc'), slider(s.cameraShake, 0, 1.5, 0.1, (v) => {
+      s.cameraShake = v;
+      app.renderer.setCameraShake(v);
+      persist('Settings changed');
+    })),
   );
 
   gfxCard.appendChild(
-    settingRow(
-      'Damage numbers',
-      'Show floating damage values during matches.',
-      toggle(s.showDamageNumbers, (v) => {
-        s.showDamageNumbers = v;
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.dmg_numbers'), t('settings.dmg_numbers_desc'), toggle(s.showDamageNumbers, (v) => {
+      s.showDamageNumbers = v;
+      persist('Settings changed');
+    })),
   );
 
   gfxCard.appendChild(
-    settingRow(
-      'Performance overlay',
-      'FPS, draw calls and render scale.',
-      toggle(app.perfVisible, (v) => {
-        app.togglePerfHud(v);
-      }),
-    ),
+    settingRow(t('settings.perf'), t('settings.perf_desc'), toggle(app.perfVisible, (v) => {
+      app.togglePerfHud(v);
+    })),
   );
   body.appendChild(gfxCard);
 
-  // Quality detail readout.
   const q = QUALITY[s.graphics];
   body.appendChild(
     el('div', { class: 'card', style: 'padding:11px' }, [
       el('div', { class: 'tiny', style: 'line-height:1.7' }, [
         document.createTextNode(
-          `Shadows ${q.shadows ? `${q.shadowMapSize}px${q.softShadows ? ' soft' : ''}` : 'off'} · Crowd ${q.crowdCount || 'off'} · Particles ${q.particles ? 'on' : 'off'} · Bloom ${q.bloom ? 'on' : 'off'} · Render scale ${q.renderScale} · Max DPR ${q.maxPixelRatio}`,
+          `${t('settings.shadows', {}, 'Shadows')}: ${q.shadows ? faNum(q.shadowMapSize) + 'px' + (q.softShadows ? ' ' + t('settings.soft', {}, 'soft') : '') : t('settings.off')} · ${t('settings.crowd', {}, 'Crowd')}: ${faNum(q.crowdCount) || t('settings.off')} · ${t('settings.particles', {}, 'Particles')}: ${q.particles ? t('settings.on') : t('settings.off')} · ${t('bloom', {}, 'Bloom')}: ${q.bloom ? t('settings.on') : t('settings.off')} · Scale ${faNum(q.renderScale)} · DPR ${faNum(q.maxPixelRatio)}`,
         ),
       ]),
     ]),
   );
 
   // ---------------------------------------------------------------- audio
-  body.appendChild(el('div', { class: 'section-label', text: 'Audio' }));
+  body.appendChild(el('div', { class: 'section-label', text: t('settings.audio') }));
   const audCard = el('div', { class: 'card' });
   audCard.appendChild(
-    settingRow('Master volume', '', slider(s.masterVolume, 0, 1, 0.05, (v) => {
+    settingRow(t('settings.master'), '', slider(s.masterVolume, 0, 1, 0.05, (v) => {
       s.masterVolume = v;
       app.applyAudioSettings();
       persist('Settings changed');
     })),
   );
   audCard.appendChild(
-    settingRow('Music', '', slider(s.musicVolume, 0, 1, 0.05, (v) => {
+    settingRow(t('settings.music'), '', slider(s.musicVolume, 0, 1, 0.05, (v) => {
       s.musicVolume = v;
       app.applyAudioSettings();
       persist('Settings changed');
     })),
   );
   audCard.appendChild(
-    settingRow('Sound effects', '', slider(s.sfxVolume, 0, 1, 0.05, (v) => {
+    settingRow(t('settings.sfx'), '', slider(s.sfxVolume, 0, 1, 0.05, (v) => {
       s.sfxVolume = v;
       app.applyAudioSettings();
       audio.play('hit_medium', { volume: 0.6 });
@@ -158,7 +143,7 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
     })),
   );
   audCard.appendChild(
-    settingRow('Crowd', '', slider(s.crowdVolume, 0, 1, 0.05, (v) => {
+    settingRow(t('settings.crowd'), '', slider(s.crowdVolume, 0, 1, 0.05, (v) => {
       s.crowdVolume = v;
       app.applyAudioSettings();
       audio.crowdPop(0.5);
@@ -166,31 +151,27 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
     })),
   );
   audCard.appendChild(
-    settingRow(
-      'Commentary',
-      'Live play-by-play during matches.',
-      toggle(s.commentary, (v) => {
-        s.commentary = v;
-        app.applyAudioSettings();
-        if (v) audio.say('Commentary enabled. Let us get to work.', true);
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.commentary'), t('settings.commentary_desc'), toggle(s.commentary, (v) => {
+      s.commentary = v;
+      app.applyAudioSettings();
+      if (v) audio.say('گزارش‌گر فعال شد. بزن بریم!', true);
+      persist('Settings changed');
+    })),
   );
   body.appendChild(audCard);
 
   // ------------------------------------------------------------- controls
-  body.appendChild(el('div', { class: 'section-label', text: 'Controls' }));
+  body.appendChild(el('div', { class: 'section-label', text: t('settings.controls') }));
   const ctrlCard = el('div', { class: 'card' });
   ctrlCard.appendChild(
     settingRow(
-      'Control scheme',
-      'Hybrid gives you both the stick/buttons and gestures.',
+      t('settings.scheme'),
+      t('settings.scheme_desc'),
       segmented(
         [
-          { id: 'buttons', label: 'Buttons' },
-          { id: 'gestures', label: 'Gestures' },
-          { id: 'hybrid', label: 'Hybrid' },
+          { id: 'buttons', label: t('settings.buttons') },
+          { id: 'gestures', label: t('settings.gestures') },
+          { id: 'hybrid', label: t('settings.hybrid') },
         ],
         s.controls,
         (val) => {
@@ -203,52 +184,42 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
     ),
   );
   ctrlCard.appendChild(
-    settingRow(
-      'Left-handed layout',
-      'Mirrors the movement stick and action pad.',
-      toggle(s.leftHanded, (v) => {
-        s.leftHanded = v;
-        app.applyInputSettings();
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.lefthand'), t('settings.lefthand_desc'), toggle(s.leftHanded, (v) => {
+      s.leftHanded = v;
+      app.applyInputSettings();
+      persist('Settings changed');
+    })),
   );
   ctrlCard.appendChild(
-    settingRow(
-      'Haptic feedback',
-      'Vibration on impacts and counters.',
-      toggle(s.haptics, (v) => {
-        s.haptics = v;
-        app.applyInputSettings();
-        if (v) app.input.haptic([12, 30, 12]);
-        persist('Settings changed');
-      }),
-    ),
+    settingRow(t('settings.haptics'), t('settings.haptics_desc'), toggle(s.haptics, (v) => {
+      s.haptics = v;
+      app.applyInputSettings();
+      if (v) app.input.haptic([12, 30, 12]);
+      persist('Settings changed');
+    })),
   );
   body.appendChild(ctrlCard);
 
   body.appendChild(
     el('div', { class: 'card', style: 'padding:12px' }, [
-      el('div', { class: 'section-label', style: 'margin:0 0 6px', text: 'Gesture reference' }),
-      gestureRow('Tap', 'Quick strike / tie-up'),
-      gestureRow('Swipe up', 'Throw or signature move'),
-      gestureRow('Swipe down', 'Takedown or submission'),
-      gestureRow('Swipe sideways (hard)', 'Grapple'),
-      gestureRow('Swipe sideways (soft)', 'Escape / disengage'),
-      gestureRow('Draw a circle', 'Reversal'),
-      gestureRow('Double tap', 'Finisher (or taunt)'),
-      gestureRow('Press and hold', 'Guard'),
+      el('div', { class: 'section-label', style: 'margin:0 0 6px', text: t('settings.gesture_ref') }),
+      gestureRow(t('g.tap'), t('g.tap_desc')),
+      gestureRow(t('g.up'), t('g.up_desc')),
+      gestureRow(t('g.down'), t('g.down_desc')),
+      gestureRow(t('g.side_strong'), t('g.side_strong_desc')),
+      gestureRow(t('g.side_soft'), t('g.side_soft_desc')),
+      gestureRow(t('g.circle'), t('g.circle_desc')),
+      gestureRow(t('g.double'), t('g.double_desc')),
+      gestureRow(t('g.hold'), t('g.hold_desc')),
     ]),
   );
 
   // ---------------------------------------------------------------- saving
-  body.appendChild(el('div', { class: 'section-label', text: 'Save data' }));
+  body.appendChild(el('div', { class: 'section-label', text: t('settings.data') }));
   const saveCard = el('div', { class: 'card' });
   saveCard.appendChild(
     el('div', { class: 'tiny', style: 'margin-bottom:10px' }, [
-      document.createTextNode(
-        `Progress auto-saves after every match, unlock and milestone. Last save: ${save.checkpoint.label}.`,
-      ),
+      document.createTextNode(t('settings.save_line', { label: save.checkpoint.label })),
     ]),
   );
   saveCard.appendChild(
@@ -260,10 +231,10 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
           onclick: async () => {
             audio.play('ui_confirm');
             await app.saves.manualSave();
-            toast.show('Manual save created', 'green', 2000, '💾');
+            toast.show(t('settings.manual_saved'), 'green', 2000, '💾');
           },
         },
-        [document.createTextNode('Manual Save')],
+        [document.createTextNode(t('settings.manual_save'))],
       ),
       el(
         'button',
@@ -273,13 +244,13 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
             const has = await app.saves.hasManual();
             if (!has) {
               audio.play('ui_error');
-              toast.show('No manual save found', 'red');
+              toast.show(t('settings.no_manual'), 'red');
               return;
             }
             confirmModal(
               app,
-              'Load Manual Save?',
-              'Your current unsaved progress will be replaced by the manual save slot.',
+              t('settings.load_title'),
+              t('settings.load_body'),
               async () => {
                 const loaded = await app.saves.loadManual();
                 if (loaded) {
@@ -287,14 +258,14 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
                   app.applyAudioSettings();
                   app.applyGraphicsSettings();
                   app.applyInputSettings();
-                  toast.show('Manual save loaded', 'green', 2200);
+                  toast.show(t('settings.manual_loaded'), 'green', 2200);
                   app.go('hub');
                 }
               },
             );
           },
         },
-        [document.createTextNode('Load Manual')],
+        [document.createTextNode(t('settings.load_manual'))],
       ),
     ]),
   );
@@ -310,13 +281,13 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
             const data = app.saves.exportString();
             try {
               await navigator.clipboard.writeText(data);
-              toast.show('Save code copied to clipboard', 'green', 2600, '📋');
+              toast.show(t('settings.copied'), 'green', 2600, '📋');
             } catch {
               showExportModal(app, data);
             }
           },
         },
-        [document.createTextNode('Export')],
+        [document.createTextNode(t('settings.export'))],
       ),
       el(
         'button',
@@ -327,7 +298,7 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
             showImportModal(app);
           },
         },
-        [document.createTextNode('Import')],
+        [document.createTextNode(t('settings.import'))],
       ),
     ]),
   );
@@ -343,24 +314,24 @@ export const renderSettings = (app: App, params?: Record<string, unknown>): void
           audio.play('ui_error');
           confirmModal(
             app,
-            'Delete Career?',
-            'This permanently erases your wrestler, all titles, unlocks and match history. There is no way back.',
+            t('settings.delete_title'),
+            t('settings.delete_body'),
             async () => {
               await app.saves.wipe();
               app.save = null;
               app.go('onboarding');
             },
-            'Delete Forever',
+            t('settings.delete_forever'),
           );
         },
       },
-      [document.createTextNode('Delete Career')],
+      [document.createTextNode(t('settings.delete_career'))],
     ),
   );
 
   body.appendChild(
     el('div', { class: 'tiny center', style: 'margin-top:18px;opacity:.45' }, [
-      document.createTextNode(`KOSHTI v1.0.0 · ${app.caps.renderer.slice(0, 40)}`),
+      document.createTextNode(`کُشتی نسخه ۱.۰`),
     ]),
   );
 
@@ -445,7 +416,7 @@ const confirmModal = (
   title: string,
   message: string,
   onConfirm: () => void | Promise<void>,
-  confirmLabel = 'Confirm',
+  confirmLabel = t('confirm'),
 ): void => {
   const backdrop = el('div', { class: 'modal-backdrop' });
   backdrop.appendChild(
@@ -454,7 +425,7 @@ const confirmModal = (
       el('p', { text: message }),
       el('div', { class: 'btn-row' }, [
         el('button', { class: 'btn secondary', onclick: () => { audio.play('ui_back'); backdrop.remove(); } }, [
-          document.createTextNode('Cancel'),
+          document.createTextNode(t('cancel')),
         ]),
         el(
           'button',
@@ -483,11 +454,11 @@ const showExportModal = (app: App, data: string): void => {
   ta.value = data;
   backdrop.appendChild(
     el('div', { class: 'modal' }, [
-      el('h2', { text: 'Export Save' }),
-      el('p', { text: 'Copy this code and keep it somewhere safe. Import it on another device to continue your career.' }),
+      el('h2', { text: t('settings.export_title') }),
+      el('p', { text: t('settings.export_body') }),
       ta,
       el('button', { class: 'btn', style: 'margin-top:12px', onclick: () => backdrop.remove() }, [
-        document.createTextNode('Done'),
+        document.createTextNode(t('done')),
       ]),
     ]),
   );
@@ -498,17 +469,17 @@ const showExportModal = (app: App, data: string): void => {
 const showImportModal = (app: App): void => {
   const backdrop = el('div', { class: 'modal-backdrop' });
   const ta = el('textarea', {
-    placeholder: 'Paste your save code here…',
+    placeholder: 'کد ذخیره را اینجا بچسبان…',
     style: 'width:100%;height:130px;background:rgba(0,0,0,.4);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:10px;font-family:monospace;resize:none',
   }) as HTMLTextAreaElement;
   backdrop.appendChild(
     el('div', { class: 'modal' }, [
-      el('h2', { text: 'Import Save' }),
-      el('p', { text: 'Importing replaces your current career completely.' }),
+      el('h2', { text: t('settings.import_title') }),
+      el('p', { text: t('settings.import_body') }),
       ta,
       el('div', { class: 'btn-row', style: 'margin-top:12px' }, [
         el('button', { class: 'btn secondary', onclick: () => backdrop.remove() }, [
-          document.createTextNode('Cancel'),
+          document.createTextNode(t('cancel')),
         ]),
         el(
           'button',
@@ -518,7 +489,7 @@ const showImportModal = (app: App): void => {
               const loaded = await app.saves.importString(ta.value.trim());
               if (!loaded) {
                 audio.play('ui_error');
-                toast.show('Invalid save code', 'red');
+                toast.show(t('settings.invalid'), 'red');
                 return;
               }
               app.save = loaded;
@@ -526,11 +497,11 @@ const showImportModal = (app: App): void => {
               app.applyGraphicsSettings();
               app.applyInputSettings();
               backdrop.remove();
-              toast.show('Save imported', 'green', 2400);
+              toast.show(t('settings.imported'), 'green', 2400);
               app.go('hub');
             },
           },
-          [document.createTextNode('Import')],
+          [document.createTextNode(t('settings.import'))],
         ),
       ]),
     ]),
