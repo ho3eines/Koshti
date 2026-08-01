@@ -42,36 +42,57 @@ tap *Add to Home screen*, and it installs with its own launcher icon, runs
 fullscreen, and works offline via a service worker. In practice that's the
 fastest way to get the game onto a device.
 
-### Getting the APK
+### The APK
 
-The APK is **built by CI, not committed to the repo** — binaries don't belong
-in Git, and the build needs the Android SDK.
+**A signed, installable APK is committed at
+[`public/apk/koshti-1.0.0.apk`](public/apk/koshti-1.0.0.apk)** (702 KB).
 
-1. **Enable CI once** (the automation account can't write to
-   `.github/workflows/`, so the workflow ships in `ci/`):
-
-   ```bash
-   mkdir -p .github/workflows
-   git mv ci/build-apk.yml .github/workflows/build-apk.yml
-   git commit -m "ci: enable Android APK build" && git push
-   ```
-
-   Then: **Actions** → *Build Android APK* → newest green run → **Artifacts**
-   → `koshti-apk`. See [`ci/README.md`](ci/README.md).
-2. **Or build it locally:**
-
-```bash
-npm run android:apk
-# → android/app/build/outputs/apk/release/
+```
+package        com.koshti.wrestling
+version        1.0.0
+minSdk         24  (Android 7.0)
+targetSdk      33
+signatures     v1 + v2 + v3, all verified
+requires       OpenGL ES 3.0
 ```
 
-Requires JDK 21 and Android SDK 36. The native project in `android/` is fully
-configured: icons, splash screens for every density, immersive-fullscreen
+Copy it to a phone, allow "install from unknown sources", and tap it.
+
+#### Rebuilding it
+
+Two independent build paths are provided.
+
+**1. Direct build — no Gradle, no Android Studio.** Uses only `aapt2`,
+`javac`, `d8` and `apksigner`, and fetches all of them over plain `git clone`:
+
+```bash
+npm run apk:toolchain   # one-time: JDK + build-tools + android.jar (~350 MB)
+npm run apk             # → public/apk/koshti-1.0.0.apk
+```
+
+This is how the committed APK was produced. It works in locked-down
+environments where `dl.google.com`, `services.gradle.org` and
+`maven.google.com` are unreachable. The host is
+[`android-native/`](android-native/): a single dependency-free `Activity`
+(no AndroidX, no Capacitor) wrapping a fullscreen hardware-accelerated
+WebView that loads the game from `assets/www`.
+
+**2. Standard Gradle build**, if you have the normal Android toolchain:
+
+```bash
+npm run android:apk     # → android/app/build/outputs/apk/release/
+```
+
+Requires JDK 21 and Android SDK 36. The Capacitor project in `android/` is
+fully configured: icons, per-density splash screens, immersive-fullscreen
 activity, GL ES 3.0 requirement, cloud-backup rules and ProGuard rules.
 
-Tagging a release (`git tag v1.0.0 && git push --tags`) attaches the APKs to a
-GitHub Release. On `main`, CI also copies them into `public/apk/` and can
-deploy the whole `public/` folder to GitHub Pages.
+CI (`ci/build-apk.yml`) runs path 2. To enable it:
+
+```bash
+mkdir -p .github/workflows
+git mv ci/build-apk.yml .github/workflows/build-apk.yml
+```
 
 ---
 
@@ -235,9 +256,10 @@ tests/career.test.ts     63   saves, migration, progression, league, brackets
 tests/engine.test.ts     50   rig, animation, camera, quality, particles, input
 tests/ui.test.ts         50   every screen, full onboarding, navigation, persistence
 tests/gameplay.test.ts   23   full match loops, frame-rate independence, balance
-tests/bundle.test.ts      4   boots the shipped bundle, PWA manifest, chunks
+tests/bundle.test.ts      5   boots the shipped bundle, PWA manifest, chunks
+tests/apk.test.ts         7   APK structure, signing, DEX, bundled game assets
                         ───
-                        221
+                        229
 ```
 
 Run with `npm test`.
@@ -267,17 +289,20 @@ Worth recording, because they were all real:
 
 ## Known limitations
 
-- **No APK in the repo.** The build sandbox has no JDK, Android SDK, Gradle or
-  Maven access — all firewalled — so an APK genuinely cannot be produced here.
-  The workflow that builds one is committed at `ci/build-apk.yml` and needs a
-  single `git mv` into `.github/workflows/` to activate (the automation account
-  lacks GitHub's `workflows` permission). Until then, use
-  `npm run android:apk` locally, or install the PWA from `public/app`.
-- **No GPU in CI.** Browser binaries couldn't be downloaded, so the rendered
-  pixels have not been visually verified on a device. Everything CPU-side is
-  tested for real, and `tests/bundle.test.ts` boots the actual shipped bundle
-  against a stubbed WebGL2 context to prove it reaches the title screen without
-  errors — but nobody has *looked* at a frame. Run `npm run dev` to see it.
+- **The APK has not been run on a device.** It is structurally valid — correct
+  manifest, valid DEX, all three signature schemes verify, the full game is
+  inside `assets/www` — and `tests/apk.test.ts` asserts all of that. But no
+  emulator or physical phone was available here, so first-launch behaviour on
+  real hardware is unverified. Install it and check.
+- **No GPU anywhere in this environment.** Browser binaries couldn't be
+  downloaded, so the rendered pixels have never been seen. Everything CPU-side
+  is tested for real, and `tests/bundle.test.ts` boots the actual shipped
+  bundle against a stubbed WebGL2 context to prove it reaches the title screen
+  with zero app-level errors — but nobody has *looked* at a frame.
+  Run `npm run dev` to see it.
+- **Debug signing key.** The committed APK is signed with a generated
+  throwaway key, which is fine for sideloading but not for Play Store
+  publishing. Use your own upload key for that.
 - **Commentary** uses the platform TTS voice rather than recorded VO — it reads
   real match context, but it sounds synthetic.
 - **Cloud sync** is Android's backup framework plus manual export codes; there

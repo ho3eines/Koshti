@@ -157,26 +157,21 @@
       <div class="card">
         <h2>📦 Android APK</h2>
         <p>
-          The APK is produced by CI rather than committed to the repo (binaries
-          don't belong in Git, and the build needs the Android SDK).
+          Signed and ready to sideload. Copy it to your phone, allow install
+          from unknown sources, and tap it.
         </p>
-        <a class="btn secondary" href="https://github.com/ho3eines/Koshti/actions/workflows/build-apk.yml">
-          Download from GitHub Actions
-        </a>
-        <p style="margin-top: 14px">
-          Open the newest green run → <b>Artifacts</b> → <code>koshti-apk</code>.
-          Or build it yourself:
-        </p>
-        <pre>git clone https://github.com/ho3eines/Koshti
-cd Koshti
-npm install
-npm run android:apk
-
-# → android/app/build/outputs/apk/release/</pre>
+        <a class="btn" href="./apk/koshti-1.0.0.apk" download>Download APK · 702 KB</a>
+        <div class="grid" style="margin-top: 14px">
+          <div class="stat"><b>7.0+</b><span>Android</span></div>
+          <div class="stat"><b>v1+v2+v3</b><span>Signed</span></div>
+        </div>
+        <p style="margin-top: 14px">Or rebuild it yourself — no Gradle needed:</p>
+        <pre>npm run apk:toolchain   # JDK + build-tools
+npm run apk             # → public/apk/</pre>
         <p class="note">
-          Requires JDK 21 and Android SDK 36. Tagging a release
-          (<code>git tag v1.0.0 &amp;&amp; git push --tags</code>) also attaches the
-          APKs to a GitHub Release.
+          Built with aapt2 + javac + d8 + apksigner directly. A standard Gradle
+          build (<code>npm run android:apk</code>) is also available if you have
+          Android Studio.
         </p>
       </div>
 

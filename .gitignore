@@ -13,7 +13,6 @@ android/local.properties
 android/app/release/
 android/app/src/main/assets/public/
 android/capacitor-cordova-android-plugins/
-*.apk
 *.aab
 *.keystore
 !debug.keystore
@@ -21,7 +20,9 @@ android/capacitor-cordova-android-plugins/
 # Generated brand source art (large; regenerate as needed)
 assets/brand/*-source.png
 
-# public/ is assembled by `npm run build:public`; the landing page is tracked,
-# the generated game build and CI-produced APKs are not.
+# public/ is assembled by `npm run build:public`; the landing page and the
+# built APK are tracked deliverables, the regenerable web build is not.
 public/app/
-public/apk/
+
+# APK build scratch dir
+.apk-build/
