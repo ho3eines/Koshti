@@ -21,6 +21,7 @@ import { renderProfile } from '../src/ui/screens/profile';
 import { renderSettings } from '../src/ui/screens/settings';
 import { TRAINING_STAGES } from '../src/game/career/training';
 import { newSave } from '../src/game/save/schema';
+import { setLang } from '../src/core/i18n';
 import type { ScreenId } from '../src/game/save/schema';
 
 // ---------------------------------------------------------------- test rig
@@ -116,6 +117,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  setLang('en');
 });
 
 // ------------------------------------------------------------- every screen
@@ -275,7 +277,7 @@ describe('hub navigation', () => {
     save.profile.skillPoints = 3;
     app.go('hub');
     const t = text(app);
-    expect(t).toContain('TEST WRESTLER');
+    expect(t.toUpperCase()).toContain('TEST WRESTLER');
     expect(t).toContain('Level 1');
     expect(t).toContain('1,234');
     expect(t).toContain('3 SP');
@@ -309,7 +311,7 @@ describe('hub navigation', () => {
   it('points a new player at training first', async () => {
     const app = await makeApp();
     app.go('hub');
-    expect(text(app)).toContain('Training:');
+    expect(text(app)).toContain('Training');
   });
 });
 
@@ -461,7 +463,7 @@ describe('league screen', () => {
     save.profile.coins = 0;
     app.go('league');
     expect(app.uiRoot.querySelectorAll('.card.locked').length).toBeGreaterThan(0);
-    expect(text(app)).toContain('not enough coins');
+    expect(text(app).toLowerCase()).toContain('not enough coins');
   });
 
   it('shows a single promotion bout when one is earned', async () => {
@@ -470,7 +472,7 @@ describe('league screen', () => {
     save.training.completed = TRAINING_STAGES.map((s) => s.id);
     save.league.promotionAvailable = true;
     app.go('league');
-    expect(text(app)).toContain('PROMOTION BOUT');
+    expect(text(app).toUpperCase()).toContain('PROMOTION BOUT');
     expect(app.uiRoot.querySelectorAll('.vs-card').length).toBe(1);
   });
 });

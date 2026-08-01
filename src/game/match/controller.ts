@@ -60,13 +60,13 @@ export class MatchController {
     }
     this.introTimer = seconds;
     this.sim.paused = true;
-    this.renderer.setCameraMode('cinematic_intro');
+    this.renderer.setCameraMode?.('cinematic_intro');
     return seconds;
   }
 
   private beginMatch(): void {
     this.sim.paused = false;
-    this.renderer.setCameraMode('broadcast');
+    this.renderer.setCameraMode?.('broadcast');
     audio.play('bell', { volume: 1 });
     audio.crowdPop(0.7);
     this.say(`یک دو سه… زنگ! ${this.names.player} در برابر ${this.names.opponent} — شروع!`, true);
@@ -204,7 +204,7 @@ export class MatchController {
     }
 
     // Fixed-step simulation.
-    const scaled = dtRaw * this.renderer.timeScaleValue;
+    const scaled = dtRaw * (this.renderer.timeScaleValue ?? 1);
     this.accumulator += Math.min(scaled, 0.2);
     let steps = 0;
     while (this.accumulator >= FIXED_STEP && steps < 6) {
@@ -223,7 +223,7 @@ export class MatchController {
     this.commentaryCooldown = Math.max(0, this.commentaryCooldown - dtRaw);
 
     this.cbs.onTick?.(this.sim, dtRaw);
-    this.renderer.render(
+    this.renderer.render?.(
       dtRaw,
       { player: this.sim.player, opponent: this.sim.opponent },
       this.sim.crowd,
@@ -238,13 +238,13 @@ export class MatchController {
         const heavy = e.move.damage > 18;
         audio.play(heavy ? 'whoosh' : 'grapple', { volume: heavy ? 0.6 : 0.35 });
         if (e.move.category === 'finisher') {
-          this.renderer.setCameraMode('finisher', 2.2);
-          this.renderer.slowmo(1.1, 0.4);
+          this.renderer.setCameraMode?.('finisher', 2.2);
+          this.renderer.slowmo?.(1.1, 0.4);
           audio.play('finisher_charge', { volume: 0.8 });
           audio.crowdPop(1);
           this.say(`${this.names[e.side]} is going for the finish!`, true);
         } else if (e.move.category === 'signature') {
-          this.renderer.setCameraMode('closeup', 1.4);
+          this.renderer.setCameraMode?.('closeup', 1.4);
           audio.crowdPop(0.6);
         }
         break;
@@ -253,17 +253,17 @@ export class MatchController {
       case 'move_hit': {
         const m = e.move;
         const impact = m.impact * (e.critical ? 1.35 : 1);
-        this.renderer.impact(
+        this.renderer.impact?.(
           e.side === 'player' ? 'opponent' : 'player',
           impact,
           e.critical ? 0xffd24a : 0xfff0c0,
         );
-        this.renderer.showDamage(e.side === 'player' ? 'opponent' : 'player', e.damage, e.critical);
+        this.renderer.showDamage?.(e.side === 'player' ? 'opponent' : 'player', e.damage, e.critical);
 
         if (m.category === 'throw' || m.category === 'finisher' || m.category === 'takedown') {
           audio.play('slam', { volume: 1 });
           const victimSide: Side = e.side === 'player' ? 'opponent' : 'player';
-          this.renderer.matDust(victimSide, m.category === 'finisher' ? 1.6 : 1.1);
+          this.renderer.matDust?.(victimSide, m.category === 'finisher' ? 1.6 : 1.1);
         }
         else if (m.impact > 0.6) audio.play('hit_heavy', { volume: 0.9 });
         else if (m.impact > 0.3) audio.play('hit_medium', { volume: 0.8 });
@@ -288,17 +288,17 @@ export class MatchController {
 
       case 'move_blocked':
         audio.play('block', { volume: 0.6 });
-        this.renderer.impact(e.side === 'player' ? 'opponent' : 'player', 0.2, 0x9fd8ff);
+        this.renderer.impact?.(e.side === 'player' ? 'opponent' : 'player', 0.2, 0x9fd8ff);
         break;
 
       case 'reversal': {
         audio.play('reversal', { volume: 0.95 });
         audio.crowdPop(e.perfect ? 0.95 : 0.7);
-        this.renderer.setCameraMode('closeup', 1.5);
-        this.renderer.impact(e.side === 'player' ? 'opponent' : 'player', 0.9, 0x38bdf8);
+        this.renderer.setCameraMode?.('closeup', 1.5);
+        this.renderer.impact?.(e.side === 'player' ? 'opponent' : 'player', 0.9, 0x38bdf8);
         if (e.side === 'player') {
           this.input.haptic([12, 26, 12]);
-          this.renderer.slowmo(0.55, 0.5);
+          this.renderer.slowmo?.(0.55, 0.5);
         }
         this.say(
           e.perfect
@@ -315,14 +315,14 @@ export class MatchController {
 
       case 'knockdown':
         audio.play('slam', { volume: 0.85 });
-        this.renderer.setCameraMode('ground', 1.8);
-        this.renderer.matDust(e.side === 'player' ? 'opponent' : 'player', 1.3);
+        this.renderer.setCameraMode?.('ground', 1.8);
+        this.renderer.matDust?.(e.side === 'player' ? 'opponent' : 'player', 1.3);
         audio.crowdPop(0.75);
         this.say('و خاک شد! ضربهٔ سنگینی بود!');
         break;
 
       case 'stance_change':
-        if (e.stance === 'ground') this.renderer.setCameraMode('ground', 2.5);
+        if (e.stance === 'ground') this.renderer.setCameraMode?.('ground', 2.5);
         break;
 
       case 'score':
@@ -405,11 +405,11 @@ export class MatchController {
     audio.play('bell', { volume: 1 });
     audio.crowdPop(1);
     audio.stopMusic();
-    this.renderer.setCameraMode('victory');
+    this.renderer.setCameraMode?.('victory');
     if (playerWon) {
-      this.renderer.celebrate();
-      this.renderer.playClip('player', 'celebrate');
-      this.renderer.playClip('opponent', 'down');
+      this.renderer.celebrate?.();
+      this.renderer.playClip?.('player', 'celebrate');
+      this.renderer.playClip?.('opponent', 'down');
       audio.play('victory', { volume: 1 });
       audio.playMusic('victory');
       this.input.haptic([40, 60, 40, 60, 80]);
@@ -418,8 +418,8 @@ export class MatchController {
         true,
       );
     } else {
-      this.renderer.playClip('opponent', 'celebrate');
-      this.renderer.playClip('player', 'down');
+      this.renderer.playClip?.('opponent', 'celebrate');
+      this.renderer.playClip?.('player', 'down');
       audio.play('defeat', { volume: 0.9 });
       this.say(`${this.names.opponent} می‌برد. برگرد به سالن تمرین.`, true);
     }

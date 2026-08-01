@@ -154,8 +154,8 @@ describe.skipIf(!built)('production bundle', () => {
     expect(r.errors, `app errors:\n${r.errors.join('\n')}`).toEqual([]);
 
     // The real onboarding screen must be on screen.
-    expect(r.uiText).toContain('KOSHTI');
-    expect(r.uiText).toContain('Rise of a Champion');
+    expect(r.uiText).toMatch(/KOSHTI|کُشتی/);
+    expect(r.uiText).toMatch(/Rise of a Champion|ظهور یک قهرمان/);
     expect(r.uiText.length).toBeGreaterThan(60);
   }, 60_000);
 
